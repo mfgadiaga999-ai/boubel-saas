@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client, Client
@@ -56,25 +57,113 @@ def index():
         role = session.get('role')
         q_id = session.get('quincaillerie_id')
 
-        # Si SUPER ADMIN
+        # --- ESPACE SUPER ADMIN ---
         if role == 'super_admin':
+            # 1. Charger toutes les quincailleries
             res_q = supabase.table('quincailleries').select('*').order('id').execute()
             liste_quincailleries = res_q.data or []
-            
-            # Récupérer les identifiants des gérants pour chaque quincaillerie
+
+            # 2. Charger toutes les ventes globalement
+            res_v = supabase.table('ventes').select('*').execute()
+            toutes_les_ventes = res_v.data or []
+
+            # 3. Charger tout le stock globalement
+            res_s = supabase.table('stock').select('*').execute()
+            tout_le_stock = res_s.data or []
+
+            # 4. Charger les gérants
             res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
             users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
-            
+
+            # 5. Calcul des métriques globales et par quincaillerie
+            ca_total_global = 0.0
+            total_ventes_count = len(toutes_les_ventes)
+            total_articles_stock = sum(int(item.get('quantite', 0)) for item in tout_le_stock)
+
+            stats_q = {q['id']: {'ca': 0.0, 'nb_ventes': 0, 'nb_produits': 0} for q in liste_quincailleries}
+
+            for v in toutes_les_ventes:
+                qid = v.get('quincaillerie_id')
+                montant = float(v.get('prix_vente', 0)) * int(v.get('quantite_vendue', 1))
+                ca_total_global += montant
+                if qid in stats_q:
+                    stats_q[qid]['ca'] += montant
+                    stats_q[qid]['nb_ventes'] += 1
+
+            for s in tout_le_stock:
+                qid = s.get('quincaillerie_id')
+                if qid in stats_q:
+                    stats_q[qid]['nb_produits'] += 1
+
             for q in liste_quincailleries:
-                q['identifiant_gerant'] = users_map.get(q['id'], 'Non attribué')
+                qid = q['id']
+                q['identifiant_gerant'] = users_map.get(qid, 'Non attribué')
+                q['ca'] = stats_q.get(qid, {}).get('ca', 0.0)
+                q['nb_ventes'] = stats_q.get(qid, {}).get('nb_ventes', 0)
+                q['nb_produits'] = stats_q.get(qid, {}).get('nb_produits', 0)
+
+            # --- MOTEUR D'ANALYSE INTELLIGENTE (SMART INSIGHTS) ---
+            insights = []
+            nb_clients = len(liste_quincailleries)
+
+            if nb_clients > 0:
+                ca_moyen = ca_total_global / nb_clients
+
+                # Leader du réseau
+                top_q = max(liste_quincailleries, key=lambda x: x['ca'], default=None)
+                if top_q and top_q['ca'] > 0:
+                    insights.append({
+                        'badge': 'Succès',
+                        'bg': 'success',
+                        'icon': 'fa-trophy',
+                        'titre': 'Quincaillerie Leader',
+                        'message': f"<b>{top_q['nom_entreprise']}</b> survole le réseau avec <b>{top_q['ca']:,.0f} FCFA</b> de CA et {top_q['nb_ventes']} ventes."
+                    })
+
+                # Alerte Inactivité / Performance Faible
+                inactives = [q for q in liste_quincailleries if q['ca'] == 0]
+                if inactives:
+                    noms_inactives = ", ".join([q['nom_entreprise'] for q in inactives[:3]])
+                    insights.append({
+                        'badge': 'Alerte',
+                        'bg': 'warning',
+                        'icon': 'fa-triangle-exclamation',
+                        'titre': 'Comptes Inactifs ou Sans Ventes',
+                        'message': f"<b>{len(inactives)} quincaillerie(s)</b> n'ont enregistré aucune vente ({noms_inactives}). Pensez à relancer leurs gérants."
+                    })
+
+                # Produit le plus vendu sur l'ensemble du SaaS
+                produits_vendus = [v.get('nom_produit') for v in toutes_les_ventes if v.get('nom_produit')]
+                if produits_vendus:
+                    top_prod_nom, top_prod_count = Counter(produits_vendus).most_common(1)[0]
+                    insights.append({
+                        'badge': 'Tendance',
+                        'bg': 'primary',
+                        'icon': 'fa-fire',
+                        'titre': 'Produit Star du Réseau',
+                        'message': f"L'article le plus demandé sur l'ensemble du réseau est <b>{top_prod_nom}</b> avec {top_prod_count} transactions."
+                    })
+
+                # Moyenne par point de vente
+                insights.append({
+                    'badge': 'Moyenne',
+                    'bg': 'info',
+                    'icon': 'fa-chart-line',
+                    'titre': 'Chiffre d\'Affaires Moyen',
+                    'message': f"La moyenne de ventes est établie à <b>{ca_moyen:,.0f} FCFA</b> par quincaillerie."
+                })
 
             return render_template(
                 'super_admin.html',
                 quincailleries=liste_quincailleries,
-                total_clients=len(liste_quincailleries)
+                total_clients=nb_clients,
+                ca_total_global=ca_total_global,
+                total_ventes_count=total_ventes_count,
+                total_articles_stock=total_articles_stock,
+                insights=insights
             )
 
-        # Si GERANT DE QUINCAILLERIE
+        # --- ESPACE GERANT DE QUINCAILLERIE ---
         elif q_id:
             res_q = supabase.table('quincailleries').select('*').eq('id', q_id).execute()
             if res_q.data:
