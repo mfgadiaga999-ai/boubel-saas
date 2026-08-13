@@ -7,21 +7,24 @@ from datetime import datetime
 app = Flask(__name__, template_folder='templates', static_folder='../public/static')
 app.secret_key = os.environ.get('SECRET_KEY', 'boubel_saas_secret_key_2026')
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "").strip()
 
-supabase: Client = None
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception as e:
-        print(f"Erreur initialisation Supabase : {e}")
+def get_supabase_client():
+    if SUPABASE_URL and SUPABASE_KEY:
+        try:
+            return create_client(SUPABASE_URL, SUPABASE_KEY)
+        except Exception as e:
+            print(f"Erreur Supabase: {e}")
+            return None
+    return None
 
 @app.route('/')
 def index():
     produits, ventes, liste_quincailleries = [], [], []
     alertes_count = 0
     info_quincaillerie = None
+    supabase = get_supabase_client()
 
     if session.get('connecte') and supabase:
         role = session.get('role')
@@ -86,6 +89,7 @@ def index():
 def login():
     identifiant = request.form.get('identifiant', '').strip()
     mot_de_passe = request.form.get('mot_de_passe', '').strip()
+    supabase = get_supabase_client()
 
     if not supabase:
         flash("La connexion à la base de données n'est pas configurée.", "danger")
