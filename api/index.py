@@ -19,6 +19,38 @@ def get_supabase_client():
             return None
     return None
 
+def init_super_admin():
+    """ Crée ou met à jour automatiquement le compte superadmin avec le mot de passe hashé par Flask """
+    supabase = get_supabase_client()
+    if not supabase:
+        return
+
+    admin_identifiant = "superadmin"
+    admin_mdp = "#M@meF@llou999#"
+    hashed_mdp = generate_password_hash(admin_mdp)
+
+    try:
+        # Vérifie si le superadmin existe déjà
+        res = supabase.table('utilisateurs').select('*').eq('identifiant', admin_identifiant).execute()
+        existing = res.data or []
+
+        if existing:
+            # Mettre à jour avec le hash généré par Flask
+            supabase.table('utilisateurs').update({'mot_de_passe': hashed_mdp}).eq('identifiant', admin_identifiant).execute()
+        else:
+            # Créer le compte
+            supabase.table('utilisateurs').insert({
+                'quincaillerie_id': None,
+                'identifiant': admin_identifiant,
+                'mot_de_passe': hashed_mdp,
+                'role': 'super_admin'
+            }).execute()
+    except Exception as e:
+        print(f"Erreur auto-init admin: {e}")
+
+# Initialisation automatique au lancement
+init_super_admin()
+
 @app.route('/')
 def index():
     produits, ventes, liste_quincailleries = [], [], []
@@ -121,6 +153,7 @@ def logout():
 
 @app.route('/admin/creer-quincaillerie', methods=['POST'])
 def creer_quincaillerie():
+    supabase = get_supabase_client()
     if session.get('role') != 'super_admin' or not supabase:
         return redirect(url_for('index'))
 
@@ -150,6 +183,7 @@ def creer_quincaillerie():
 
 @app.route('/admin/toggle-quincaillerie/<int:id>')
 def toggle_quincaillerie(id):
+    supabase = get_supabase_client()
     if session.get('role') != 'super_admin' or not supabase:
         return redirect(url_for('index'))
 
@@ -165,6 +199,7 @@ def toggle_quincaillerie(id):
 
 @app.route('/ajouter-stock', methods=['POST'])
 def ajouter_stock():
+    supabase = get_supabase_client()
     q_id = session.get('quincaillerie_id')
     if not session.get('connecte') or not q_id or not supabase:
         return redirect(url_for('index'))
@@ -198,6 +233,7 @@ def ajouter_stock():
 
 @app.route('/modifier-produit/<int:id>', methods=['POST'])
 def modifier_produit(id):
+    supabase = get_supabase_client()
     q_id = session.get('quincaillerie_id')
     if not session.get('connecte') or not q_id or not supabase:
         return redirect(url_for('index'))
@@ -219,6 +255,7 @@ def modifier_produit(id):
 
 @app.route('/supprimer-produit/<int:id>')
 def supprimer_produit(id):
+    supabase = get_supabase_client()
     q_id = session.get('quincaillerie_id')
     if not session.get('connecte') or not q_id or not supabase:
         return redirect(url_for('index'))
@@ -229,6 +266,7 @@ def supprimer_produit(id):
 
 @app.route('/ajouter-vente', methods=['POST'])
 def ajouter_vente():
+    supabase = get_supabase_client()
     q_id = session.get('quincaillerie_id')
     if not session.get('connecte') or not q_id or not supabase:
         return redirect(url_for('index'))
@@ -260,6 +298,7 @@ def ajouter_vente():
 
 @app.route('/supprimer-vente/<int:id>')
 def supprimer_vente(id):
+    supabase = get_supabase_client()
     q_id = session.get('quincaillerie_id')
     if not session.get('connecte') or not q_id or not supabase:
         return redirect(url_for('index'))
