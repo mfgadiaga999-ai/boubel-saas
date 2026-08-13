@@ -19,37 +19,31 @@ def get_supabase_client():
             return None
     return None
 
-def init_super_admin():
-    """ Crée ou met à jour automatiquement le compte superadmin avec le mot de passe hashé par Flask """
+# --- ROUTE SPÉCIALE DE RÉPARATION / RÉINITIALISATION ---
+@app.route('/reset-admin')
+def reset_admin():
     supabase = get_supabase_client()
     if not supabase:
-        return
+        return "❌ Erreur : Les variables SUPABASE_URL ou SUPABASE_KEY ne sont pas lues sur Vercel."
 
-    admin_identifiant = "superadmin"
-    admin_mdp = "#M@meF@llou999#"
-    hashed_mdp = generate_password_hash(admin_mdp)
+    mdp_clair = "#M@meF@llou999#"
+    hash_mdp = generate_password_hash(mdp_clair)
 
     try:
-        # Vérifie si le superadmin existe déjà
-        res = supabase.table('utilisateurs').select('*').eq('identifiant', admin_identifiant).execute()
-        existing = res.data or []
-
-        if existing:
-            # Mettre à jour avec le hash généré par Flask
-            supabase.table('utilisateurs').update({'mot_de_passe': hashed_mdp}).eq('identifiant', admin_identifiant).execute()
+        res = supabase.table('utilisateurs').select('*').eq('identifiant', 'superadmin').execute()
+        if res.data:
+            supabase.table('utilisateurs').update({'mot_de_passe': hash_mdp}).eq('identifiant', 'superadmin').execute()
+            return f"<h3>✅ Succès !</h3><p>Le mot de passe du <b>superadmin</b> a été réinitialisé en base.</p><ul><li><b>Identifiant :</b> superadmin</li><li><b>Mot de passe :</b> {mdp_clair}</li></ul><br><a href='/'>👉 Cliquer ici pour aller à la page de connexion</a>"
         else:
-            # Créer le compte
             supabase.table('utilisateurs').insert({
                 'quincaillerie_id': None,
-                'identifiant': admin_identifiant,
-                'mot_de_passe': hashed_mdp,
+                'identifiant': 'superadmin',
+                'mot_de_passe': hash_mdp,
                 'role': 'super_admin'
             }).execute()
+            return f"<h3>✅ Succès !</h3><p>Le compte <b>superadmin</b> a été créé.</p><ul><li><b>Identifiant :</b> superadmin</li><li><b>Mot de passe :</b> {mdp_clair}</li></ul><br><a href='/'>👉 Cliquer ici pour aller à la page de connexion</a>"
     except Exception as e:
-        print(f"Erreur auto-init admin: {e}")
-
-# Initialisation automatique au lancement
-init_super_admin()
+        return f"<h3>❌ Erreur Supabase :</h3><p>{str(e)}</p>"
 
 @app.route('/')
 def index():
@@ -62,7 +56,6 @@ def index():
         role = session.get('role')
         q_id = session.get('quincaillerie_id')
 
-        # Si SUPER ADMIN
         if role == 'super_admin':
             res_q = supabase.table('quincailleries').select('*').order('id').execute()
             liste_quincailleries = res_q.data or []
@@ -72,7 +65,6 @@ def index():
                 total_clients=len(liste_quincailleries)
             )
 
-        # Si GERANT DE QUINCAILLERIE
         elif q_id:
             res_q = supabase.table('quincailleries').select('*').eq('id', q_id).execute()
             if res_q.data:
@@ -82,7 +74,6 @@ def index():
                     flash("Votre compte est suspendu. Veuillez contacter l'administrateur.", "danger")
                     return redirect(url_for('index'))
 
-            # Stock de la quincaillerie connectée
             res_stock = supabase.table('stock').select('*').eq('quincaillerie_id', q_id).order('nom').execute()
             for item in (res_stock.data or []):
                 stk = item.get('quantite', 0)
@@ -97,7 +88,6 @@ def index():
                     'seuil_alerte': seuil
                 })
 
-            # Ventes de la quincaillerie connectée
             res_ventes = supabase.table('ventes').select('*').eq('quincaillerie_id', q_id).order('created_at', desc=True).execute()
             for v in (res_ventes.data or []):
                 ventes.append({
@@ -149,8 +139,6 @@ def logout():
     flash("Vous êtes déconnecté.", "info")
     return redirect(url_for('index'))
 
-# --- ESPACE SUPER ADMIN ---
-
 @app.route('/admin/creer-quincaillerie', methods=['POST'])
 def creer_quincaillerie():
     supabase = get_supabase_client()
@@ -194,8 +182,6 @@ def toggle_quincaillerie(id):
         flash("Statut du compte mis à jour.", "info")
 
     return redirect(url_for('index'))
-
-# --- ESPACE QUINCAILLERIE (CLIENT) ---
 
 @app.route('/ajouter-stock', methods=['POST'])
 def ajouter_stock():
