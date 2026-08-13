@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Quincaillerie - Plateforme SaaS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; color: #334155; }
+        .navbar-custom { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); }
+        .stock-critique-row, .stock-critique-row td { background-color: #fef2f2 !important; }
+        .welcome-hero { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); padding: 40px 20px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top py-2">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="/">
+                <i class="fa-solid fa-store text-warning me-2 fs-4"></i>
+                <span>{% if info_quincaillerie %}{{ info_quincaillerie.nom_entreprise }}{% else %}Plateforme SaaS Quincailleries{% endif %}</span>
+            </a>
+            
+            <div class="ms-auto d-flex align-items-center gap-2">
+                {% if session.get('connecte') %}
+                    <span class="badge bg-light text-dark py-2 px-3 me-2">
+                        <i class="fa-solid fa-user me-1 text-primary"></i> {{ session.get('nom_utilisateur') }}
+                    </span>
+                    <a href="/logout" class="btn btn-outline-danger btn-sm fw-bold">
+                        <i class="fa-solid fa-power-off me-1"></i> Déconnexion
+                    </a>
+                {% else %}
+                    <button class="btn btn-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <i class="fa-solid fa-lock me-1"></i> Connexion
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show border-0 shadow-sm small mb-3" role="alert">
+                        <i class="fa-solid fa-circle-info me-2"></i> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if session.get('connecte') %}
+
+            {% if alertes_count > 0 %}
+            <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4">
+                <i class="fa-solid fa-triangle-exclamation fs-3 me-3"></i>
+                <div><strong>Alerte Stock :</strong> <strong>{{ alertes_count }}</strong> article(s) ont atteint le seuil critique !</div>
+            </div>
+            {% endif %}
+
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-lg-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-header bg-dark text-white py-2 px-3 fw-bold small">
+                            <i class="fa-solid fa-box-archive text-success me-2"></i> 1. Stock (Ajouter / Recharger)
+                        </div>
+                        <div class="card-body p-3">
+                            <form action="/ajouter-stock" method="POST" class="row g-2">
+                                <div class="col-12"><input type="text" name="nom" class="form-control form-control-sm" placeholder="Nom du matériel" required></div>
+                                <div class="col-6"><input type="number" name="quantite" class="form-control form-control-sm" placeholder="Qté" required></div>
+                                <div class="col-6"><input type="number" step="0.01" name="prix" class="form-control form-control-sm" placeholder="Prix (FCFA)" required></div>
+                                <div class="col-12"><input type="number" name="seuil_alerte" value="5" class="form-control form-control-sm" placeholder="Seuil Alerte"></div>
+                                <div class="col-12"><button type="submit" class="btn btn-success btn-sm fw-bold w-100">Enregistrer</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-header bg-primary text-white py-2 px-3 fw-bold small">
+                            <i class="fa-solid fa-cart-shopping text-warning me-2"></i> 2. Vente (Sortie de Stock)
+                        </div>
+                        <div class="card-body p-3">
+                            <form action="/ajouter-vente" method="POST" class="row g-2">
+                                <div class="col-12"><input type="text" name="nom" class="form-control form-control-sm" placeholder="Nom du produit" required></div>
+                                <div class="col-6"><input type="number" name="quantite" class="form-control form-control-sm" placeholder="Qté vendue" required></div>
+                                <div class="col-6"><input type="date" name="date" class="form-control form-control-sm" required></div>
+                                <div class="col-12"><button type="submit" class="btn btn-primary btn-sm fw-bold w-100">Valider la Vente</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ul class="nav nav-tabs mb-3 d-flex" id="tabMenu">
+                <li class="nav-item flex-fill text-center">
+                    <button class="nav-link active w-100 fw-bold" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock-pane">Stock Global</button>
+                </li>
+                <li class="nav-item flex-fill text-center">
+                    <button class="nav-link w-100 fw-bold" id="ventes-tab" data-bs-toggle="tab" data-bs-target="#ventes-pane">Journal des Ventes</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="stock-pane">
+                    <div class="card card-custom overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Matériel</th>
+                                        <th>Prix Unitaire</th>
+                                        <th>Stock</th>
+                                        <th>Alerte</th>
+                                        <th>Total (FCFA)</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in produits %}
+                                    <tr class="{% if item.stock_total <= item.seuil_alerte %}stock-critique-row{% endif %}">
+                                        <td class="fw-bold">{{ item.nom_affichage }}</td>
+                                        <td>{{ item.prix_unitaire }} FCFA</td>
+                                        <td><span class="badge {% if item.stock_total <= item.seuil_alerte %}bg-danger{% else %}bg-dark{% endif %}">{{ item.stock_total }}</span></td>
+                                        <td>{{ item.seuil_alerte }}</td>
+                                        <td class="fw-bold text-primary">{{ item.prix_unitaire * item.stock_total }} FCFA</td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#editModal{{ item.id }}"><i class="fa-solid fa-pen"></i></button>
+                                            <a href="/supprimer-produit/{{ item.id }}" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="return confirm('Supprimer ?')"><i class="fa-solid fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+
+                                    <div class="modal fade" id="editModal{{ item.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-sm modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-dark text-white py-2">
+                                                    <h6 class="modal-title">Modifier Produit</h6>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form action="/modifier-produit/{{ item.id }}" method="POST">
+                                                    <div class="modal-body p-3">
+                                                        <input type="text" name="nom" value="{{ item.nom_affichage }}" class="form-control form-control-sm mb-2" required>
+                                                        <input type="number" step="0.01" name="prix" value="{{ item.prix_unitaire }}" class="form-control form-control-sm mb-2" required>
+                                                        <input type="number" name="stock" value="{{ item.stock_total }}" class="form-control form-control-sm mb-2" required>
+                                                        <input type="number" name="seuil" value="{{ item.seuil_alerte }}" class="form-control form-control-sm mb-2" required>
+                                                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Enregistrer</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="ventes-pane">
+                    <div class="card card-custom overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Produit</th>
+                                        <th>Qté</th>
+                                        <th>Total</th>
+                                        <th>Vendeur</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for v in ventes %}
+                                    <tr>
+                                        <td class="small text-muted">{{ v.date_vente }}</td>
+                                        <td class="fw-bold">{{ v.nom_produit }}</td>
+                                        <td><span class="badge bg-success">{{ v.quantite_vendue }}</span></td>
+                                        <td class="fw-bold text-success">{{ v.prix_vente * v.quantite_vendue }} FCFA</td>
+                                        <td><span class="badge bg-secondary">{{ v.vendu_par }}</span></td>
+                                        <td class="text-center">
+                                            <a href="/supprimer-vente/{{ v.id }}" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="return confirm('Annuler ?')"><i class="fa-solid fa-rotate-left"></i></a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6 text-center">
+                    <div class="welcome-hero mt-4">
+                        <i class="fa-solid fa-warehouse text-primary display-3 mb-3"></i>
+                        <h3 class="fw-bold">Gestion Commerciale de Quincaillerie</h3>
+                        <p class="text-muted small mb-4">Solution Cloud centralisée pour le suivi du stock, des alertes et des ventes en temps réel.</p>
+                        <button class="btn btn-primary fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i> Connexion à votre compte
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white py-2">
+                    <h6 class="modal-title"><i class="fa-solid fa-lock me-2"></i> Authentification</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/login" method="POST">
+                    <div class="modal-body p-3">
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Identifiant</label>
+                            <input type="text" name="identifiant" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small mb-1">Mot de passe</label>
+                            <input type="password" name="mot_de_passe" class="form-control form-control-sm" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Se connecter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
