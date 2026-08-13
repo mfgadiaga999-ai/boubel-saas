@@ -56,15 +56,25 @@ def index():
         role = session.get('role')
         q_id = session.get('quincaillerie_id')
 
+        # Si SUPER ADMIN
         if role == 'super_admin':
             res_q = supabase.table('quincailleries').select('*').order('id').execute()
             liste_quincailleries = res_q.data or []
+            
+            # Récupérer les identifiants des gérants pour chaque quincaillerie
+            res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
+            users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
+            
+            for q in liste_quincailleries:
+                q['identifiant_gerant'] = users_map.get(q['id'], 'Non attribué')
+
             return render_template(
                 'super_admin.html',
                 quincailleries=liste_quincailleries,
                 total_clients=len(liste_quincailleries)
             )
 
+        # Si GERANT DE QUINCAILLERIE
         elif q_id:
             res_q = supabase.table('quincailleries').select('*').eq('id', q_id).execute()
             if res_q.data:
@@ -139,6 +149,8 @@ def logout():
     flash("Vous êtes déconnecté.", "info")
     return redirect(url_for('index'))
 
+# --- ESPACE SUPER ADMIN ---
+
 @app.route('/admin/creer-quincaillerie', methods=['POST'])
 def creer_quincaillerie():
     supabase = get_supabase_client()
@@ -169,6 +181,34 @@ def creer_quincaillerie():
 
     return redirect(url_for('index'))
 
+@app.route('/admin/modifier-gerant/<int:q_id>', methods=['POST'])
+def modifier_gerant(q_id):
+    supabase = get_supabase_client()
+    if session.get('role') != 'super_admin' or not supabase:
+        return redirect(url_for('index'))
+
+    nouvel_identifiant = request.form.get('identifiant_gerant', '').strip()
+    nouveau_mdp = request.form.get('mdp_gerant', '').strip()
+
+    res_u = supabase.table('utilisateurs').select('id').eq('quincaillerie_id', q_id).eq('role', 'gerant').execute()
+    users = res_u.data or []
+
+    if users:
+        user_id = users[0]['id']
+        update_data = {}
+        if nouvel_identifiant:
+            update_data['identifiant'] = nouvel_identifiant
+        if nouveau_mdp:
+            update_data['mot_de_passe'] = generate_password_hash(nouveau_mdp)
+
+        if update_data:
+            supabase.table('utilisateurs').update(update_data).eq('id', user_id).execute()
+            flash("Identifiants du gérant mis à jour avec succès !", "success")
+    else:
+        flash("Aucun gérant trouvé pour cette quincaillerie.", "danger")
+
+    return redirect(url_for('index'))
+
 @app.route('/admin/toggle-quincaillerie/<int:id>')
 def toggle_quincaillerie(id):
     supabase = get_supabase_client()
@@ -182,6 +222,18 @@ def toggle_quincaillerie(id):
         flash("Statut du compte mis à jour.", "info")
 
     return redirect(url_for('index'))
+
+@app.route('/admin/supprimer-quincaillerie/<int:id>')
+def supprimer_quincaillerie(id):
+    supabase = get_supabase_client()
+    if session.get('role') != 'super_admin' or not supabase:
+        return redirect(url_for('index'))
+
+    supabase.table('quincailleries').delete().eq('id', id).execute()
+    flash("Quincaillerie et toutes ses données supprimées définitivement.", "info")
+    return redirect(url_for('index'))
+
+# --- ESPACE QUINCAILLERIE (CLIENT) ---
 
 @app.route('/ajouter-stock', methods=['POST'])
 def ajouter_stock():
