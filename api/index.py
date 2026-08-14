@@ -52,6 +52,9 @@ def index():
     info_quincaillerie = None
     supabase = get_supabase_client()
 
+    # Définition du mois en cours (Format AAA-MM, ex: '2026-03')
+    mois_courant = datetime.now().strftime('%Y-%m')
+
     if session.get('connecte') and supabase:
         role = session.get('role')
         q_id = session.get('quincaillerie_id')
@@ -70,19 +73,25 @@ def index():
             res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
             users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
 
-            ca_total_global = 0.0
-            total_ventes_count = len(toutes_les_ventes)
+            ca_total_global_mois = 0.0
+            total_ventes_count_mois = 0
             total_articles_stock = sum(int(item.get('quantite', 0)) for item in tout_le_stock)
 
             stats_q = {q['id']: {'ca': 0.0, 'nb_ventes': 0, 'nb_produits': 0} for q in liste_quincailleries}
 
             for v in toutes_les_ventes:
                 qid = v.get('quincaillerie_id')
-                montant = float(v.get('prix_vente', 0)) * int(v.get('quantite_vendue', 1))
-                ca_total_global += montant
-                if qid in stats_q:
-                    stats_q[qid]['ca'] += montant
-                    stats_q[qid]['nb_ventes'] += 1
+                date_v = str(v.get('date_vente', ''))
+                
+                # Vérifier si la vente appartient au mois en cours
+                if date_v.startswith(mois_courant):
+                    montant = float(v.get('prix_vente', 0)) * int(v.get('quantite_vendue', 1))
+                    ca_total_global_mois += montant
+                    total_ventes_count_mois += 1
+                    
+                    if qid in stats_q:
+                        stats_q[qid]['ca'] += montant
+                        stats_q[qid]['nb_ventes'] += 1
 
             for s in tout_le_stock:
                 qid = s.get('quincaillerie_id')
@@ -100,59 +109,59 @@ def index():
             nb_clients = len(liste_quincailleries)
 
             if nb_clients > 0:
-                ca_moyen = ca_total_global / nb_clients
+                ca_moyen = ca_total_global_mois / nb_clients
 
                 top_q = max(liste_quincailleries, key=lambda x: x['ca'], default=None)
                 if top_q and top_q['ca'] > 0:
                     insights.append({
-                        'badge': 'Succès',
+                        'badge': 'Leader du mois',
                         'bg': 'success',
                         'icon': 'fa-trophy',
-                        'titre': 'Quincaillerie Leader',
-                        'message': f"<b>{top_q['nom_entreprise']}</b> survole le réseau avec <b>{top_q['ca']:,.0f} FCFA</b> de CA et {top_q['nb_ventes']} ventes."
+                        'titre': 'Quincaillerie en Tête ce Mois-ci',
+                        'message': f"<b>{top_q['nom_entreprise']}</b> mène ce mois avec <b>{top_q['ca']:,.0f} FCFA</b> de CA ({top_q['nb_ventes']} ventes)."
                     })
 
                 inactives = [q for q in liste_quincailleries if q['ca'] == 0]
                 if inactives:
                     noms_inactives = ", ".join([q['nom_entreprise'] for q in inactives[:3]])
                     insights.append({
-                        'badge': 'Alerte',
+                        'badge': 'Inactivité',
                         'bg': 'warning',
                         'icon': 'fa-triangle-exclamation',
-                        'titre': 'Comptes Inactifs ou Sans Ventes',
-                        'message': f"<b>{len(inactives)} quincaillerie(s)</b> n'ont enregistré aucune vente ({noms_inactives})."
+                        'titre': 'Pas encore de Ventes ce Mois-ci',
+                        'message': f"<b>{len(inactives)} quincaillerie(s)</b> n'ont pas encore enregistré de ventes ce mois-ci ({noms_inactives})."
                     })
 
-                produits_vendus = [v.get('nom_produit') for v in toutes_les_ventes if v.get('nom_produit')]
-                if produits_vendus:
-                    top_prod_nom, top_prod_count = Counter(produits_vendus).most_common(1)[0]
+                ventes_du_mois = [v.get('nom_produit') for v in toutes_les_ventes if str(v.get('date_vente', '')).startswith(mois_courant)]
+                if ventes_du_mois:
+                    top_prod_nom, top_prod_count = Counter(ventes_du_mois).most_common(1)[0]
                     insights.append({
                         'badge': 'Tendance',
                         'bg': 'primary',
                         'icon': 'fa-fire',
-                        'titre': 'Produit Star du Réseau',
-                        'message': f"L'article le plus demandé sur l'ensemble du réseau est <b>{top_prod_nom}</b> avec {top_prod_count} transactions."
+                        'titre': 'Produit Star du Mois',
+                        'message': f"Article le plus vendu sur le réseau ce mois : <b>{top_prod_nom}</b> ({top_prod_count} ventes)."
                     })
 
                 insights.append({
                     'badge': 'Moyenne',
                     'bg': 'info',
                     'icon': 'fa-chart-line',
-                    'titre': 'Chiffre d\'Affaires Moyen',
-                    'message': f"La moyenne de ventes est établie à <b>{ca_moyen:,.0f} FCFA</b> par quincaillerie."
+                    'titre': 'Chiffre d\'Affaires Moyen du Mois',
+                    'message': f"Moyenne mensuelle du réseau : <b>{ca_moyen:,.0f} FCFA</b> par point de vente."
                 })
 
             return render_template(
                 'super_admin.html',
                 quincailleries=liste_quincailleries,
                 total_clients=nb_clients,
-                ca_total_global=ca_total_global,
-                total_ventes_count=total_ventes_count,
+                ca_total_global=ca_total_global_mois,
+                total_ventes_count=total_ventes_count_mois,
                 total_articles_stock=total_articles_stock,
                 insights=insights
             )
 
-        # --- ESPACE GERANT DE QUINCAILLERIE (AMÉLIORÉ AVEC INTELLIGENCE) ---
+        # --- ESPACE GERANT DE QUINCAILLERIE ---
         elif q_id:
             res_q = supabase.table('quincailleries').select('*').eq('id', q_id).execute()
             if res_q.data:
@@ -184,44 +193,48 @@ def index():
 
             # Ventes de la quincaillerie
             res_ventes = supabase.table('ventes').select('*').eq('quincaillerie_id', q_id).order('created_at', desc=True).execute()
-            ca_quincaillerie = 0.0
+            ca_quincaillerie_mois = 0.0
+            ventes_du_mois_gerant = []
             
             for v in (res_ventes.data or []):
                 qte = int(v.get('quantite_vendue', 1))
                 px = float(v.get('prix_vente', 0))
-                ca_quincaillerie += (qte * px)
+                date_v = str(v.get('date_vente', ''))
+
+                # Si la vente date du mois en cours
+                if date_v.startswith(mois_courant):
+                    ca_quincaillerie_mois += (qte * px)
+                    ventes_du_mois_gerant.append(v.get('nom_produit'))
+
                 ventes.append({
                     'id': v.get('id'),
-                    'date_vente': v.get('date_vente'),
+                    'date_vente': date_v,
                     'nom_produit': v.get('nom_produit'),
                     'quantite_vendue': qte,
                     'prix_vente': px,
                     'vendu_par': v.get('vendu_par')
                 })
 
-            # --- INSIGHTS ET CONSEILS INTELLIGENTS POUR LE GÉRANT ---
+            # Insights Gérant pour le mois en cours
             gerant_insights = []
 
-            # 1. Meilleur Produit de la boutique
-            noms_ventes = [v['nom_produit'] for v in ventes if v.get('nom_produit')]
-            if noms_ventes:
-                top_p_nom, top_p_cnt = Counter(noms_ventes).most_common(1)[0]
+            if ventes_du_mois_gerant:
+                top_p_nom, top_p_cnt = Counter(ventes_du_mois_gerant).most_common(1)[0]
                 gerant_insights.append({
-                    'badge': 'Top Vente',
+                    'badge': 'Top Vente du Mois',
                     'bg': 'success',
                     'icon': 'fa-star',
-                    'titre': 'Votre produit phare',
-                    'message': f"L'article <b>{top_p_nom}</b> est votre champion avec <b>{top_p_cnt} vente(s)</b> enregistrée(s). Veillez à ne jamais être en rupture !"
+                    'titre': 'Votre produit phare ce mois-ci',
+                    'message': f"L'article <b>{top_p_nom}</b> est votre meilleure vente du mois avec <b>{top_p_cnt} transaction(s)</b>."
                 })
 
-            # 2. Gestion de l'alerte stock
             if alertes_count > 0:
                 gerant_insights.append({
                     'badge': 'Attention',
                     'bg': 'danger',
                     'icon': 'fa-box-open',
                     'titre': 'Réapprovisionnement requis',
-                    'message': f"Vous avez <b>{alertes_count} article(s)</b> dont le stock est égal ou inférieur au seuil d'alerte."
+                    'message': f"Vous avez <b>{alertes_count} article(s)</b> proche(s) de la rupture."
                 })
             else:
                 gerant_insights.append({
@@ -229,18 +242,16 @@ def index():
                     'bg': 'info',
                     'icon': 'fa-check-circle',
                     'titre': 'Niveau de Stock Sain',
-                    'message': "Tous vos articles sont au-dessus de leur seuil de sécurité."
+                    'message': "Tous vos produits sont bien approvisionnés."
                 })
 
-            # 3. Conseil sur le CA
-            if ca_quincaillerie > 0:
-                gerant_insights.append({
-                    'badge': 'Activité',
-                    'bg': 'primary',
-                    'icon': 'fa-chart-line',
-                    'titre': 'Chiffre d\'Affaires Cumulé',
-                    'message': f"Vous avez généré <b>{ca_quincaillerie:,.0f} FCFA</b> sur {len(ventes)} vente(s) enregistrée(s)."
-                })
+            gerant_insights.append({
+                'badge': 'Mensuel',
+                'bg': 'primary',
+                'icon': 'fa-calendar-check',
+                'titre': 'Chiffre d\'Affaires Mensuel',
+                'message': f"Vous avez réalisé <b>{ca_quincaillerie_mois:,.0f} FCFA</b> de CA durant le mois en cours."
+            })
 
             return render_template(
                 'index.html',
@@ -248,7 +259,7 @@ def index():
                 ventes=ventes,
                 alertes_count=alertes_count,
                 info_quincaillerie=info_quincaillerie,
-                ca_quincaillerie=ca_quincaillerie,
+                ca_quincaillerie=ca_quincaillerie_mois,
                 valeur_stock_totale=valeur_stock_totale,
                 gerant_insights=gerant_insights
             )
