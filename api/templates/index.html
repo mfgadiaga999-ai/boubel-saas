@@ -283,17 +283,17 @@
                                 <tbody>
                                     {% for p in produits %}
                                     <tr>
-                                        <td class="fw-bold">{{ p.nom_affichage }}</td>
-                                        <td>{{ "{:,.0f}".format(p.prix_unitaire) }} FCFA</td>
-                                        <td><span class="badge bg-secondary fs-6">{{ p.stock_total }}</span></td>
-                                        <td>
+                                        <td class="fw-bold" data-label="Nom Produit">{{ p.nom_affichage }}</td>
+                                        <td data-label="Prix Unitaire">{{ "{:,.0f}".format(p.prix_unitaire) }} FCFA</td>
+                                        <td data-label="Stock Restant"><span class="badge bg-secondary fs-6">{{ p.stock_total }}</span></td>
+                                        <td data-label="Statut">
                                             {% if p.stock_total <= p.seuil_alerte %}
                                                 <span class="badge bg-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Alerte Seuil</span>
                                             {% else %}
                                                 <span class="badge bg-success">En Stock</span>
                                             {% endif %}
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center" data-label="Actions">
                                             <a href="/supprimer-produit/{{ p.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Supprimer ce produit du stock ?')"><i class="fa-solid fa-trash"></i></a>
                                         </td>
                                     </tr>
@@ -323,13 +323,13 @@
                                 <tbody>
                                     {% for v in ventes %}
                                     <tr>
-                                        <td class="small">{{ v.date_vente }}</td>
-                                        <td class="fw-bold">{{ v.nom_produit }}</td>
-                                        <td>{{ v.quantite_vendue }}</td>
-                                        <td>{{ "{:,.0f}".format(v.prix_vente) }} FCFA</td>
-                                        <td class="fw-bold text-success">{{ "{:,.0f}".format(v.prix_vente * v.quantite_vendue) }} FCFA</td>
-                                        <td><span class="badge bg-light text-dark border">{{ v.vendu_par }}</span></td>
-                                        <td class="text-center">
+                                        <td class="small" data-label="Date">{{ v.date_vente }}</td>
+                                        <td class="fw-bold" data-label="Produit">{{ v.nom_produit }}</td>
+                                        <td data-label="Quantité">{{ v.quantite_vendue }}</td>
+                                        <td data-label="Prix Vente">{{ "{:,.0f}".format(v.prix_vente) }} FCFA</td>
+                                        <td class="fw-bold text-success" data-label="Total">{{ "{:,.0f}".format(v.prix_vente * v.quantite_vendue) }} FCFA</td>
+                                        <td data-label="Vendu par"><span class="badge bg-light text-dark border">{{ v.vendu_par }}</span></td>
+                                        <td class="text-center" data-label="Action">
                                             <a href="/supprimer-vente/{{ v.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette vente ? Le stock sera restitué.')"><i class="fa-solid fa-rotate-left"></i> Annuler</a>
                                         </td>
                                     </tr>
@@ -578,12 +578,12 @@
         ========================================================= */
 
         @media (max-width: 768px) {
-            /* Masquer l'en-tête du tableau sur mobile */
+            /* 1. Masquer uniquement le grand en-tête haut */
             .table-adaptive thead {
                 display: none !important;
             }
 
-            /* Transformer la table et les lignes en blocs flex/block */
+            /* 2. Transformer les éléments en blocs */
             .table-adaptive, 
             .table-adaptive tbody, 
             .table-adaptive tr, 
@@ -592,32 +592,31 @@
                 width: 100% !important;
             }
 
-            /* Chaque ligne du tableau devient une carte distincte */
+            /* 3. Style de chaque Carte Produit / Vente */
             .table-adaptive tbody tr {
-                margin-bottom: 12px !important;
-                border: 1px solid #e2e8f0 !important;
-                border-radius: 10px !important;
-                padding: 8px 12px !important;
+                margin-bottom: 15px !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 12px !important;
+                padding: 10px 14px !important;
                 background-color: #ffffff !important;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
             }
 
-            /* Adaptation des cartes en Mode Sombre */
             body.dark-mode .table-adaptive tbody tr {
                 background-color: #1e293b !important;
                 border-color: #334155 !important;
             }
 
-            /* Disposition chaque cellule en ligne avec label automatique */
+            /* 4. Alignement du Label à gauche et de la Valeur à droite */
             .table-adaptive td {
                 display: flex !important;
                 justify-content: space-between !important;
                 align-items: center !important;
-                padding: 6px 0 !important;
+                padding: 8px 0 !important;
                 border: none !important;
                 border-bottom: 1px dashed #e2e8f0 !important;
                 text-align: right !important;
-                font-size: 0.85rem !important;
+                font-size: 0.9rem !important;
             }
 
             body.dark-mode .table-adaptive td {
@@ -628,17 +627,18 @@
                 border-bottom: none !important;
             }
 
-            /* Ajouter le nom de la colonne devant la valeur (via l'attribut data-label) */
+            /* 5. AFFICHAGE ET FORCE DU LABEL À GAUCHE */
             .table-adaptive td::before {
-                content: attr(data-label);
-                font-weight: 600;
-                text-align: left;
-                color: #64748b;
-                margin-right: 10px;
+                content: attr(data-label) !important; /* Affiche la valeur de data-label */
+                font-weight: 700 !important;
+                text-align: left !important;
+                color: #475569 !important; /* Gris foncé lisible */
+                padding-right: 15px !important;
+                flex-shrink: 0 !important;
             }
 
             body.dark-mode .table-adaptive td::before {
-                color: #94a3b8;
+                color: #94a3b8 !important; /* Gris clair en mode sombre */
             }
         }
 
