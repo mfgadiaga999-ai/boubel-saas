@@ -270,7 +270,7 @@
                     <!-- ONGLET STOCK -->
                     <div class="tab-pane fade show active" id="stock" role="tabpanel">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
+                            <table class="table table-adaptive align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Nom Produit</th>
@@ -308,7 +308,7 @@
                     <!-- ONGLET VENTES -->
                     <div class="tab-pane fade" id="ventes" role="tabpanel">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
+                            <table class="table table-adaptive align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Date</th>
@@ -488,6 +488,23 @@
             background-color: #1e293b !important;
             border-color: #334155 !important;
         }
+        
+        body.dark-mode #chatbot-window {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+        }
+        body.dark-mode #chatbot-messages {
+            background-color: #0f172a !important;
+        }
+        body.dark-mode #chatbot-messages .bg-white {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
+        body.dark-mode #chatbot-window .card-footer {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
         /* =========================================================
         ADAPTATION RESPONSIVE (MOBILE, TABLETTE, DESKTOP)
         ========================================================= */
@@ -524,21 +541,155 @@
             }
         }
 
-        /* 3. Correctif strict pour les Tableaux sur Smartphone */
+        /* =========================================================
+        1. RESPONSIVE DES TABLEAUX (DÉFILEMENT FLUIDE SUR MOBILE)
+        ========================================================= */
+
+        /* Forcer le conteneur du tableau à prendre toute la largeur et défiler si besoin */
         .table-responsive {
             width: 100% !important;
             overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch !important; /* Scroll fluide sur iPhone/Android */
             display: block !important;
-            margin-bottom: 1rem;
+            border-radius: 8px;
         }
 
-        .table {
-            white-space: nowrap !important; /* Garde les colonnes alignées proprement */
-            font-size: 0.85rem !important;  /* Réduit légèrement la taille du texte */
+        /* Empêcher les colonnes de se chevaucher ou de se déformer */
+        .table-responsive table {
+            width: 100% !important;
+            white-space: nowrap !important; /* Garde chaque colonne alignée proprement */
         }
 
-        /* 4. Ajustement des cartes d'indicateurs (KPIs) */
+        @media (max-width: 576px) {
+            /* Ajustement de la taille du texte et des espaces dans le tableau sur petit écran */
+            .table th, .table td {
+                padding: 0.5rem 0.6rem !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .table .btn-sm {
+                padding: 0.2rem 0.4rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+
+        /* =========================================================
+        TABLEAU RESPONSIVE PAR CARTE (SANS DÉFILEMENT HORIZONTAL)
+        ========================================================= */
+
+        @media (max-width: 768px) {
+            /* Masquer l'en-tête du tableau sur mobile */
+            .table-adaptive thead {
+                display: none !important;
+            }
+
+            /* Transformer la table et les lignes en blocs flex/block */
+            .table-adaptive, 
+            .table-adaptive tbody, 
+            .table-adaptive tr, 
+            .table-adaptive td {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            /* Chaque ligne du tableau devient une carte distincte */
+            .table-adaptive tbody tr {
+                margin-bottom: 12px !important;
+                border: 1px solid #e2e8f0 !important;
+                border-radius: 10px !important;
+                padding: 8px 12px !important;
+                background-color: #ffffff !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            /* Adaptation des cartes en Mode Sombre */
+            body.dark-mode .table-adaptive tbody tr {
+                background-color: #1e293b !important;
+                border-color: #334155 !important;
+            }
+
+            /* Disposition chaque cellule en ligne avec label automatique */
+            .table-adaptive td {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                padding: 6px 0 !important;
+                border: none !important;
+                border-bottom: 1px dashed #e2e8f0 !important;
+                text-align: right !important;
+                font-size: 0.85rem !important;
+            }
+
+            body.dark-mode .table-adaptive td {
+                border-bottom-color: #334155 !important;
+            }
+
+            .table-adaptive td:last-child {
+                border-bottom: none !important;
+            }
+
+            /* Ajouter le nom de la colonne devant la valeur (via l'attribut data-label) */
+            .table-adaptive td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                text-align: left;
+                color: #64748b;
+                margin-right: 10px;
+            }
+
+            body.dark-mode .table-adaptive td::before {
+                color: #94a3b8;
+            }
+        }
+
+        /* =========================================================
+        2. RESPONSIVE DU CHATBOT (PLEIN ÉCRAN ERGONOMIQUE SUR MOBILE)
+        ========================================================= */
+
+        @media (max-width: 576px) {
+            /* Positionnement du bouton flottant (bulle) */
+            #chatbot-toggle-btn {
+                width: 50px !important;
+                height: 50px !important;
+                font-size: 20px !important;
+                bottom: 15px !important;
+                right: 15px !important;
+                z-index: 1060 !important;
+            }
+
+            /* Fenêtre de chat adaptée à l'écran du téléphone */
+            #chatbot-window {
+                width: 92vw !important;         /* 92% de la largeur de l'écran */
+                height: 75vh !important;        /* 75% de la hauteur de l'écran */
+                right: 4vw !important;          /* Centré horizontalement */
+                bottom: 75px !important;        /* Juste au-dessus du bouton flottant */
+                max-width: none !important;
+                border-radius: 12px !important;
+                z-index: 1060 !important;
+            }
+
+            /* Ajuster la taille des textes et des bulles sur mobile */
+            #chatbot-messages {
+                padding: 0.6rem !important;
+            }
+
+            #chatbot-messages .bg-white,
+            #chatbot-messages .bg-primary {
+                font-size: 12px !important;
+                max-width: 88% !important;
+            }
+
+            /* Formulaire de saisie sur mobile */
+            #chatbot-window .card-footer {
+                padding: 0.4rem !important;
+            }
+
+            #chatbot-input {
+                font-size: 13px !important;
+            }
+        }
+
+        /* Ajustement des cartes d'indicateurs (KPIs) */
         @media (max-width: 768px) {
             .card-body {
                 padding: 0.75rem !important;
