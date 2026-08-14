@@ -96,6 +96,71 @@
         body.dark-mode .text-muted {
             color: #cbd5e1 !important;
         }
+        /* =========================================================
+    ADAPTATION RESPONSIVE (MOBILE, TABLETTE, DESKTOP)
+    ========================================================= */
+
+        /* 1. Méta-balise de sécurité (À mettre dans le <head> de votre HTML) */
+        /* <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"> */
+
+        /* 2. Adaptation des Tableaux sur petits écrans */
+        .table-responsive {
+            width: 100%;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 3. Ajustements pour écrans mobiles (smartphones) */
+        @media (max-width: 768px) {
+            /* Navbar plus compacte */
+            .navbar-brand {
+                font-size: 1.1rem !important;
+            }
+            
+            .navbar .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            /* Adapter les titres et textes */
+            h1, .h1 { font-size: 1.5rem !important; }
+            h2, .h2 { font-size: 1.3rem !important; }
+            h3, .h3 { font-size: 1.1rem !important; }
+            
+            /* Cartes et espaces réduits sur mobile */
+            .card-body {
+                padding: 0.85rem !important;
+            }
+
+            .container, .container-fluid {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            /* Redimensionnement du Chatbot sur écran mobile */
+            #chatbot-window {
+                width: 90% !important;
+                right: 5% !important;
+                bottom: 80px !important;
+                height: 400px !important;
+            }
+
+            #chatbot-toggle-btn {
+                width: 50px !important;
+                height: 50px !important;
+                font-size: 20px !important;
+                bottom: 15px !important;
+                right: 15px !important;
+            }
+        }
+
+        /* 4. Ajustements pour tablettes */
+        @media (min-width: 769px) and (max-width: 991px) {
+            #chatbot-window {
+                width: 320px !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-light">
