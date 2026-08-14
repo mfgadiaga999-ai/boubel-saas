@@ -359,7 +359,26 @@
 
     </div>
 
+
     {% else %}
+    {% if not user and not is_demo %}
+    <div id="login-section" class="container py-5">
+        
+        <!-- Bouton pour lancer la démo -->
+        <div class="text-center mt-3">
+            <a href="/demo" class="btn btn-outline-success rounded-pill px-4 fw-bold">
+                🚀 Tester la Démo Gratuite
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    {% if user or is_demo %}
+    <div id="dashboard-section" class="container-fluid py-3">
+        
+        <h1>Bienvenue sur votre Dashboard {% if is_demo %}(Démo){% endif %}</h1>
+
+    </div>
+    {% endif %}
     <!-- PAGE DE CONNEXION -->
     <div class="container d-flex justify-content-center align-items-center vh-100">
         <div class="card border-0 shadow-lg p-4" style="width: 100%; max-width: 400px;">
@@ -400,13 +419,13 @@
                 </button>
             </form>
         </div>
-        <!-- Bouton d'accès direct au Mode Démo sans inscription -->
-        <div class="text-center mt-4 pt-2 border-top">
-            <p class="text-muted small mb-2">Vous souhaitez découvrir la plateforme ?</p>
-            <a href="/demo" class="btn btn-outline-success w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
-                <i class="fas fa-rocket"></i> Tester la Démo Gratuite
-            </a>
-        </div>
+    </div>
+    <!-- Bouton d'accès direct au Mode Démo sans inscription -->
+    <div class="text-center mt-4 pt-2 border-top">
+        <p class="text-muted small mb-2">Vous souhaitez découvrir la plateforme ?</p>
+        <a href="/demo" class="btn btn-outline-success w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
+            <i class="fas fa-rocket"></i> Tester la Démo Gratuite
+        </a>
     </div>
     {% endif %}
 
@@ -972,7 +991,6 @@
                 return;
             }
         }
-
      
     </script>
 </body>
