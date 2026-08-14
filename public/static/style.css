@@ -1,0 +1,82 @@
+/* =========================================================
+   STYLE DU MODE SOMBRE / CLAIR POUR LA PAGE DE CONNEXION
+   ========================================================= */
+
+/* --- MODE CLAIR (Par défaut) --- */
+body.login-page {
+    background-color: #f8fafc;
+    color: #1e293b;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.login-page .card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+body.login-page .form-control,
+body.login-page .form-select {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+body.login-page .form-control:focus {
+    background-color: #ffffff;
+    color: #0f172a;
+    border-color: #2563eb;
+}
+
+/* --- MODE SOMBRE (Active avec la classe .dark-mode) --- */
+body.dark-mode.login-page {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode.login-page .card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode.login-page .form-label,
+body.dark-mode.login-page h1,
+body.dark-mode.login-page h2,
+body.dark-mode.login-page h3,
+body.dark-mode.login-page p {
+    color: #f8fafc !important;
+}
+
+body.dark-mode.login-page .form-control,
+body.dark-mode.login-page .form-select {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode.login-page .form-control::placeholder {
+    color: #64748b !important;
+}
+
+body.dark-mode.login-page .form-control:focus {
+    background-color: #0f172a !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+/* Positionnement du bouton de bascule (Soleil/Lune) */
+.dark-mode-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}

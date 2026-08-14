@@ -20,6 +20,27 @@ def get_supabase_client():
             return None
     return None
 
+@app.route('/demo')
+def demo_dashboard():
+    # Données de démonstration totalement fictives pour séduire le prospect
+    demo_data = {
+        'nom_quincaillerie': 'Quincaillerie Démo (MFG)',
+        'chiffre_affaires': 185000,
+        'stock_total': 340,
+        'ventes': [
+            {'date': '2026-08-14', 'article': 'Ciment Dangote', 'quantite': 20, 'prix_unitaire': 3500, 'total': 70000, 'vendeur': 'gerant_demo'},
+            {'date': '2026-08-14', 'article': 'Fer de 10', 'quantite': 15, 'prix_unitaire': 3000, 'total': 45000, 'vendeur': 'gerant_demo'},
+            {'date': '2026-08-13', 'article': 'Peinture Blanche 20L', 'quantite': 2, 'prix_unitaire': 35000, 'total': 70000, 'vendeur': 'gerant_demo'}
+        ],
+        'stocks': [
+            {'article': 'Ciment Dangote', 'quantite': 120, 'prix': 3500, 'seuil': 20},
+            {'article': 'Fer de 10', 'quantite': 85, 'prix': 3000, 'seuil': 15},
+            {'article': 'Peinture Blanche 20L', 'quantite': 12, 'prix': 35000, 'seuil': 5}
+        ]
+    }
+    # On passe un paramètre is_demo=True pour afficher la bannière commerciale
+    return render_template('index.html', data=demo_data, is_demo=True)
+
 @app.route('/reset-admin')
 def reset_admin():
     supabase = get_supabase_client()

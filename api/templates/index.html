@@ -99,6 +99,18 @@
     </style>
 </head>
 <body class="bg-light">
+    {% if is_demo %}
+        <!-- Bannière d'incitation à l'achat pour les prospects -->
+        <div class="alert alert-warning border-0 rounded-0 m-0 text-center d-flex flex-wrap align-items-center justify-content-between px-3 py-2 shadow-sm" style="background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%); color: #78350f; z-index: 1060; position: relative;">
+            <div class="d-flex align-items-center mb-1 mb-md-0">
+                <span class="badge bg-warning text-dark me-2">MODE DÉMO</span>
+                <small class="fw-bold">Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !</small>
+            </div>
+            <a href="https://wa.me/221765244894?text=Bonjour,%20j'ai%20testé%20la%20démo%20de%20Boubel%20SaaS%20et%20je%20souhaite%20activer%20ma%20quincaillerie" target="_blank" class="btn btn-sm btn-success fw-bold rounded-pill px-3 shadow-sm">
+                <i class="fab fa-whatsapp me-1"></i> Commander Ma Boutique
+            </a>
+        </div>
+    {% endif %}
 
     {% if session.get('connecte') %}
     <!-- ENTÊTE CLIENT CONNECTÉ -->
@@ -387,6 +399,13 @@
                     <i class="fa-solid fa-right-to-bracket me-1"></i> Se Connecter
                 </button>
             </form>
+        </div>
+        <!-- Bouton d'accès direct au Mode Démo sans inscription -->
+        <div class="text-center mt-4 pt-2 border-top">
+            <p class="text-muted small mb-2">Vous souhaitez découvrir la plateforme ?</p>
+            <a href="/demo" class="btn btn-outline-success w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2">
+                <i class="fas fa-rocket"></i> Tester la Démo Gratuite
+            </a>
         </div>
     </div>
     {% endif %}
@@ -939,6 +958,18 @@
                 ajouterMessage(message, true);
                 input.value = "";
                 repondreChatbot(message);
+            }
+        }
+
+        function enregistrerVente(event) {
+            event.preventDefault();
+            
+            // Vérifier si nous sommes en mode démo
+            const isDemo = "{{ 'true' if is_demo else 'false' }}" === "true";
+            
+            if (isDemo) {
+                alert("🎉 Bravo ! La vente fictive a été enregistrée avec succès. En version réelle, votre chiffre d'affaires et votre stock seraient mis à jour automatiquement sur Supabase !");
+                return;
             }
         }
 
