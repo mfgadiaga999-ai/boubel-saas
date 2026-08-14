@@ -96,71 +96,6 @@
         body.dark-mode .text-muted {
             color: #cbd5e1 !important;
         }
-        /* =========================================================
-    ADAPTATION RESPONSIVE (MOBILE, TABLETTE, DESKTOP)
-    ========================================================= */
-
-        /* 1. Méta-balise de sécurité (À mettre dans le <head> de votre HTML) */
-        /* <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"> */
-
-        /* 2. Adaptation des Tableaux sur petits écrans */
-        .table-responsive {
-            width: 100%;
-            margin-bottom: 1rem;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* 3. Ajustements pour écrans mobiles (smartphones) */
-        @media (max-width: 768px) {
-            /* Navbar plus compacte */
-            .navbar-brand {
-                font-size: 1.1rem !important;
-            }
-            
-            .navbar .btn {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.85rem;
-            }
-
-            /* Adapter les titres et textes */
-            h1, .h1 { font-size: 1.5rem !important; }
-            h2, .h2 { font-size: 1.3rem !important; }
-            h3, .h3 { font-size: 1.1rem !important; }
-            
-            /* Cartes et espaces réduits sur mobile */
-            .card-body {
-                padding: 0.85rem !important;
-            }
-
-            .container, .container-fluid {
-                padding-left: 10px !important;
-                padding-right: 10px !important;
-            }
-
-            /* Redimensionnement du Chatbot sur écran mobile */
-            #chatbot-window {
-                width: 90% !important;
-                right: 5% !important;
-                bottom: 80px !important;
-                height: 400px !important;
-            }
-
-            #chatbot-toggle-btn {
-                width: 50px !important;
-                height: 50px !important;
-                font-size: 20px !important;
-                bottom: 15px !important;
-                right: 15px !important;
-            }
-        }
-
-        /* 4. Ajustements pour tablettes */
-        @media (min-width: 769px) and (max-width: 991px) {
-            #chatbot-window {
-                width: 320px !important;
-            }
-        }
     </style>
 </head>
 <body class="bg-light">
@@ -292,7 +227,7 @@
                         <span class="badge bg-secondary">{{ total_clients }} enregistrés</span>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
                                     <th>Quincaillerie</th>
@@ -422,5 +357,89 @@
             }
         });
     </script>
+    *<style>
+        body.dark-mode #chatbot-window {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+        }
+        body.dark-mode #chatbot-messages {
+            background-color: #0f172a !important;
+        }
+        body.dark-mode #chatbot-messages .bg-white {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
+        body.dark-mode #chatbot-window .card-footer {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        /* =========================================================
+        ADAPTATION RESPONSIVE (MOBILE, TABLETTE, DESKTOP)
+        ========================================================= */
+
+        /* 1. Empêcher tout débordement horizontal de la page */
+        html, body {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        /* 2. Correction de la Navbar (Gestion du titre & des boutons) */
+        .navbar, nav {
+            flex-wrap: wrap !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+
+        /* Passer le titre et les boutons sur 2 lignes si nécessaire */
+        @media (max-width: 576px) {
+            .navbar-brand, nav h1, nav .h4 {
+                font-size: 1rem !important;
+                white-space: normal !important; /* Autorise le texte à passer à la ligne */
+                max-width: 60% !important;
+            }
+
+            /* Regrouper les boutons en haut à droite */
+            .navbar .d-flex, nav .d-flex {
+                gap: 5px !important;
+            }
+
+            .navbar .btn {
+                padding: 0.25rem 0.4rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+
+        /* 3. Correctif strict pour les Tableaux sur Smartphone */
+        .table-responsive {
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            display: block !important;
+            margin-bottom: 1rem;
+        }
+
+        .table {
+            white-space: nowrap !important; /* Garde les colonnes alignées proprement */
+            font-size: 0.85rem !important;  /* Réduit légèrement la taille du texte */
+        }
+
+        /* 4. Ajustement des cartes d'indicateurs (KPIs) */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 0.75rem !important;
+            }
+
+            /* Ajuster la taille des gros chiffres (112,500 FCFA) */
+            .card h2, .card h3, .card .display-6 {
+                font-size: 1.3rem !important;
+            }
+
+            /* Inputs et boutons de formulaires */
+            .form-control, .form-select, .btn {
+                font-size: 0.9rem !important;
+            }
+        }
+    </style> */
 </body>
 </html>
