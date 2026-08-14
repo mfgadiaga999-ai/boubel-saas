@@ -7,6 +7,8 @@ from datetime import datetime
 
 app = Flask(__name__, template_folder='templates', static_folder='../public/static')
 app.secret_key = os.environ.get('SECRET_KEY', 'boubel_saas_secret_key_2026')
+if __name__ == '__main__':
+    app.run(debug=True)
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "").strip()
@@ -21,26 +23,45 @@ def get_supabase_client():
     return None
 
 @app.route('/demo')
-def demo_dashboard():
-    # Données factices de démonstration
-    demo_data = {
-        'nom_quincaillerie': 'Quincaillerie Démo (Touba)',
-        'chiffre_affaires': 185000,
-        'stock_total': 340,
-        'ventes': [
-            {'date': '2026-08-14', 'article': 'Ciment Dangote', 'quantite': 20, 'prix_unitaire': 3500, 'total': 70000, 'vendeur': 'gerant_demo'},
-            {'date': '2026-08-14', 'article': 'Fer de 10', 'quantite': 15, 'prix_unitaire': 3000, 'total': 45000, 'vendeur': 'gerant_demo'},
-            {'date': '2026-08-13', 'article': 'Peinture Blanche 20L', 'quantite': 2, 'prix_unitaire': 35000, 'total': 70000, 'vendeur': 'gerant_demo'}
-        ],
-        'stocks': [
-            {'article': 'Ciment Dangote', 'quantite': 120, 'prix': 3500, 'seuil': 20},
-            {'article': 'Fer de 10', 'quantite': 85, 'prix': 3000, 'seuil': 15},
-            {'article': 'Peinture Blanche 20L', 'quantite': 12, 'prix': 35000, 'seuil': 5}
-        ]
+def mode_demo():
+    # Données fictives pour la démonstration
+    info_quincaillerie = {
+        "nom_entreprise": "Quincaillerie Mouhidine (DÉMO)"
     }
+    
+    produits_demo = [
+        {"id": 1, "nom_affichage": "Ciment SOCOCIM 50kg", "prix_unitaire": 4500, "stock_total": 45, "seuil_alerte": 10},
+        {"id": 2, "nom_affichage": "Fer à béton 10mm", "prix_unitaire": 3800, "stock_total": 8, "seuil_alerte": 10}, # Alerte
+        {"id": 3, "nom_affichage": "Peinture BLANCOLOR 20L", "prix_unitaire": 18500, "stock_total": 12, "seuil_alerte": 5},
+        {"id": 4, "nom_affichage": "Pointe 80mm (Kg)", "prix_unitaire": 1000, "stock_total": 3, "seuil_alerte": 5} # Alerte
+    ]
+    
+    ventes_demo = [
+        {"id": 1, "date_vente": "14/08/2026 14:30", "nom_produit": "Ciment SOCOCIM 50kg", "quantite_vendue": 5, "prix_vente": 4500, "vendu_par": "Moussa"},
+        {"id": 2, "date_vente": "14/08/2026 11:15", "nom_produit": "Peinture BLANCOLOR 20L", "quantite_vendue": 1, "prix_vente": 18500, "vendu_par": "Fatou"}
+    ]
+    
+    insights_demo = [
+        {"bg": "danger", "icon": "fa-triangle-exclamation", "badge": "Urgent", "titre": "Stock Critique", "message": "Le <b>Fer à béton 10mm</b> est passé sous le seuil critique (8 restants)."},
+        {"bg": "success", "icon": "fa-chart-line", "badge": "Tendance", "titre": "Meilleure Vente", "message": "Le <b>Ciment SOCOCIM</b> représente 60% de vos ventes aujourd'hui."}
+    ]
 
-    # On renvoie votre fichier index.html
-    return render_template('index.html', data=demo_data, is_demo=True, user={'username': 'gerant_demo', 'role': 'gerant'})
+    # Calcul des KPI fictifs
+    ca_demo = sum(v["prix_vente"] * v["quantite_vendue"] for v in ventes_demo)
+    valeur_stock = sum(p["prix_unitaire"] * p["stock_total"] for p in produits_demo)
+    alertes_count = sum(1 for p in produits_demo if p["stock_total"] <= p["seuil_alerte"])
+
+    return render_template(
+        'index.html',
+        is_demo=True,
+        info_quincaillerie=info_quincaillerie,
+        produits=produits_demo,
+        ventes=ventes_demo,
+        gerant_insights=insights_demo,
+        ca_quincaillerie=ca_demo,
+        valeur_stock_totale=valeur_stock,
+        alertes_count=alertes_count
+    )
 
 @app.route('/reset-admin')
 def reset_admin():
