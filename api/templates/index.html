@@ -425,5 +425,143 @@
             }
         });
   </script>
+  <!-- =========================================================
+     WIDGET CHATBOT INTERACTIF EN WOLOF
+     ========================================================= -->
+
+<!-- Bouton Flottant (Bulle de discussion) -->
+<button id="chatbot-toggle-btn" class="btn btn-primary shadow-lg rounded-circle" onclick="toggleChatbot()" style="position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; z-index: 1050; font-size: 24px; display: flex; align-items: center; justify-content: center;">
+    <i id="chatbot-icon" class="fas fa-comments"></i>
+</button>
+
+<!-- Fenêtre de Chat -->
+<div id="chatbot-window" class="card shadow-lg border-0 d-none" style="position: fixed; bottom: 95px; right: 25px; width: 350px; max-width: 90vw; height: 450px; z-index: 1050; border-radius: 15px; overflow: hidden; flex-direction: column;">
+    
+    <!-- En-tête du Chat -->
+    <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between p-3">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-robot fa-lg me-2"></i>
+            <div>
+                <h6 class="mb-0 font-weight-bold">Dimbalikaw Quincaillerie</h6>
+                <small style="font-size: 11px; opacity: 0.9;">Mangi fi ngir dimbali leen</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" onclick="toggleChatbot()"></button>
+    </div>
+
+    <!-- Corps de la discussion -->
+    <div id="chatbot-messages" class="card-body p-3" style="overflow-y: auto; flex-grow: 1; background-color: #f8fafc;">
+        <!-- Message de bienvenue en Wolof -->
+        <div class="d-flex mb-3">
+            <div class="bg-white p-2 px-3 rounded shadow-sm border" style="max-width: 85%; font-size: 13px; color: #333;">
+                👋 Nanga def ! Lu ma la mën a dimbali tay ?
+            </div>
+        </div>
+    </div>
+
+    <!-- Pied de page avec champ de saisie -->
+    <div class="card-footer bg-white border-top p-2">
+        <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
+            <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Lacc-al sa question fii..." required autocomplete="off">
+            <button type="submit" class="btn btn-primary btn-sm px-3">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Adaptations CSS pour le Mode Sombre du Chatbot -->
+<style>
+    body.dark-mode #chatbot-window {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+    }
+    body.dark-mode #chatbot-messages {
+        background-color: #0f172a !important;
+    }
+    body.dark-mode #chatbot-messages .bg-white {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        border-color: #334155 !important;
+    }
+    body.dark-mode #chatbot-window .card-footer {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+    }
+</style>
+
+<!-- Script logique du Chatbot en Wolof -->
+    <script>
+        function toggleChatbot() {
+            const chatWindow = document.getElementById('chatbot-window');
+            const chatIcon = document.getElementById('chatbot-icon');
+            
+            if (chatWindow.classList.contains('d-none')) {
+                chatWindow.classList.remove('d-none');
+                chatWindow.style.display = 'flex';
+                chatIcon.classList.remove('fa-comments');
+                chatIcon.classList.add('fa-times');
+            } else {
+                chatWindow.classList.add('d-none');
+                chatWindow.style.display = 'none';
+                chatIcon.classList.remove('fa-times');
+                chatIcon.classList.add('fa-comments');
+            }
+        }
+
+        function ajouterMessage(texte, estUtilisateur = false) {
+            const container = document.getElementById('chatbot-messages');
+            const wrapper = document.createElement('div');
+            wrapper.className = `d-flex mb-3 ${estUtilisateur ? 'justify-content-end' : ''}`;
+
+            const bulle = document.createElement('div');
+            bulle.className = estUtilisateur 
+                ? 'bg-primary text-white p-2 px-3 rounded shadow-sm' 
+                : 'bg-white p-2 px-3 rounded shadow-sm border';
+            bulle.style.maxWidth = '85%';
+            bulle.style.fontSize = '13px';
+            bulle.innerText = texte;
+
+            wrapper.appendChild(bulle);
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function repondreChatbot(question) {
+            const q = question.toLowerCase();
+            let reponse = "Baal ma, degguma li nga wax. So beggé dimbal gu gaw, woowal sa Admin.";
+
+            // Reponses en Wolof selon la question
+            if (q.includes('mot de passe') || q.includes('passe') || q.includes('faté') || q.includes('connexion') || q.includes('connecter') || q.includes('login')) {
+                reponse = "So fatée sa mot de passe walla sa identifiant, woowal Super Admin bi ngir mu fédial la ko.";
+            } else if (q.includes('stock') || q.includes('yokk') || q.includes('produit') || q.includes('marchandise') || q.includes('article')) {
+                reponse = "Ngir yokk produit ci stock bi, bindal tourou marchandise bi ak prix bi ci bloc 'Ajouter / Réapprovisionner un Produit'.";
+            } else if (q.includes('jaay') || q.includes('vente') || q.includes('vendre') || q.includes('bind')) {
+                reponse = "So beggé bind jaay (vente), tanlal produit bi ci bloc 'Enregistrer une Vente', bind quantité bi nga jaay ba noppi nga cliquer 'Valider'.";
+            } else if (q.includes('nanga def') || q.includes('mangi fi') || q.includes('bonjour') || q.includes('salut') || q.includes('jama') || q.includes('kasumay')) {
+                reponse = "Mangi fi rekk jam rekk ! Lu ma la mën a dimbali tay ci gestion quincaillerie bi ?";
+            } else if (q.includes('xalis') || q.includes('chiffre') || q.includes('ca') || q.includes('wer') || q.includes('mois')) {
+                reponse = "Xalis bi nga gis (Chiffre d'affaires) dafa lay wan li nga jaay ci wér bi. Dafa koy réinitialiser chaque début du mois.";
+            } else if (q.includes('jerejef') || q.includes('merci') || q.includes('daccord') || q.includes('ok')) {
+                reponse = "Amul solo ! Mangi fi saa yo beggé dimbal. Dieureu ak jerejef !";
+            }
+
+            setTimeout(() => {
+                ajouterMessage(reponse, false);
+            }, 500);
+        }
+
+        function envoyerMessageChatbot(event) {
+            event.preventDefault();
+            const input = document.getElementById('chatbot-input');
+            const message = input.value.trim();
+
+            if (message !== "") {
+                ajouterMessage(message, true);
+                input.value = "";
+                repondreChatbot(message);
+            }
+        }
+    </script>
 </body>
 </html>
