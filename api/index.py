@@ -20,7 +20,6 @@ def get_supabase_client():
             return None
     return None
 
-# --- ROUTE SPÉCIALE DE RÉPARATION / RÉINITIALISATION ---
 @app.route('/reset-admin')
 def reset_admin():
     supabase = get_supabase_client()
@@ -59,23 +58,18 @@ def index():
 
         # --- ESPACE SUPER ADMIN ---
         if role == 'super_admin':
-            # 1. Charger toutes les quincailleries
             res_q = supabase.table('quincailleries').select('*').order('id').execute()
             liste_quincailleries = res_q.data or []
 
-            # 2. Charger toutes les ventes globalement
             res_v = supabase.table('ventes').select('*').execute()
             toutes_les_ventes = res_v.data or []
 
-            # 3. Charger tout le stock globalement
             res_s = supabase.table('stock').select('*').execute()
             tout_le_stock = res_s.data or []
 
-            # 4. Charger les gérants
             res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
             users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
 
-            # 5. Calcul des métriques globales et par quincaillerie
             ca_total_global = 0.0
             total_ventes_count = len(toutes_les_ventes)
             total_articles_stock = sum(int(item.get('quantite', 0)) for item in tout_le_stock)
@@ -102,14 +96,12 @@ def index():
                 q['nb_ventes'] = stats_q.get(qid, {}).get('nb_ventes', 0)
                 q['nb_produits'] = stats_q.get(qid, {}).get('nb_produits', 0)
 
-            # --- MOTEUR D'ANALYSE INTELLIGENTE (SMART INSIGHTS) ---
             insights = []
             nb_clients = len(liste_quincailleries)
 
             if nb_clients > 0:
                 ca_moyen = ca_total_global / nb_clients
 
-                # Leader du réseau
                 top_q = max(liste_quincailleries, key=lambda x: x['ca'], default=None)
                 if top_q and top_q['ca'] > 0:
                     insights.append({
@@ -120,7 +112,6 @@ def index():
                         'message': f"<b>{top_q['nom_entreprise']}</b> survole le réseau avec <b>{top_q['ca']:,.0f} FCFA</b> de CA et {top_q['nb_ventes']} ventes."
                     })
 
-                # Alerte Inactivité / Performance Faible
                 inactives = [q for q in liste_quincailleries if q['ca'] == 0]
                 if inactives:
                     noms_inactives = ", ".join([q['nom_entreprise'] for q in inactives[:3]])
@@ -129,10 +120,9 @@ def index():
                         'bg': 'warning',
                         'icon': 'fa-triangle-exclamation',
                         'titre': 'Comptes Inactifs ou Sans Ventes',
-                        'message': f"<b>{len(inactives)} quincaillerie(s)</b> n'ont enregistré aucune vente ({noms_inactives}). Pensez à relancer leurs gérants."
+                        'message': f"<b>{len(inactives)} quincaillerie(s)</b> n'ont enregistré aucune vente ({noms_inactives})."
                     })
 
-                # Produit le plus vendu sur l'ensemble du SaaS
                 produits_vendus = [v.get('nom_produit') for v in toutes_les_ventes if v.get('nom_produit')]
                 if produits_vendus:
                     top_prod_nom, top_prod_count = Counter(produits_vendus).most_common(1)[0]
@@ -144,7 +134,6 @@ def index():
                         'message': f"L'article le plus demandé sur l'ensemble du réseau est <b>{top_prod_nom}</b> avec {top_prod_count} transactions."
                     })
 
-                # Moyenne par point de vente
                 insights.append({
                     'badge': 'Moyenne',
                     'bg': 'info',
@@ -163,7 +152,7 @@ def index():
                 insights=insights
             )
 
-        # --- ESPACE GERANT DE QUINCAILLERIE ---
+        # --- ESPACE GERANT DE QUINCAILLERIE (AMÉLIORÉ AVEC INTELLIGENCE) ---
         elif q_id:
             res_q = supabase.table('quincailleries').select('*').eq('id', q_id).execute()
             if res_q.data:
@@ -173,37 +162,106 @@ def index():
                     flash("Votre compte est suspendu. Veuillez contacter l'administrateur.", "danger")
                     return redirect(url_for('index'))
 
+            # Stock de la quincaillerie
             res_stock = supabase.table('stock').select('*').eq('quincaillerie_id', q_id).order('nom').execute()
+            valeur_stock_totale = 0.0
+            
             for item in (res_stock.data or []):
                 stk = item.get('quantite', 0)
                 seuil = item.get('seuil_alerte', 5)
+                prix_u = float(item.get('prix_unitaire', 0))
+                valeur_stock_totale += (stk * prix_u)
+                
                 if stk <= seuil:
                     alertes_count += 1
                 produits.append({
                     'id': item.get('id'),
                     'nom_affichage': item.get('nom'),
                     'stock_total': stk,
-                    'prix_unitaire': float(item.get('prix_unitaire', 0)),
+                    'prix_unitaire': prix_u,
                     'seuil_alerte': seuil
                 })
 
+            # Ventes de la quincaillerie
             res_ventes = supabase.table('ventes').select('*').eq('quincaillerie_id', q_id).order('created_at', desc=True).execute()
+            ca_quincaillerie = 0.0
+            
             for v in (res_ventes.data or []):
+                qte = int(v.get('quantite_vendue', 1))
+                px = float(v.get('prix_vente', 0))
+                ca_quincaillerie += (qte * px)
                 ventes.append({
                     'id': v.get('id'),
                     'date_vente': v.get('date_vente'),
                     'nom_produit': v.get('nom_produit'),
-                    'quantite_vendue': v.get('quantite_vendue'),
-                    'prix_vente': float(v.get('prix_vente', 0)),
+                    'quantite_vendue': qte,
+                    'prix_vente': px,
                     'vendu_par': v.get('vendu_par')
                 })
+
+            # --- INSIGHTS ET CONSEILS INTELLIGENTS POUR LE GÉRANT ---
+            gerant_insights = []
+
+            # 1. Meilleur Produit de la boutique
+            noms_ventes = [v['nom_produit'] for v in ventes if v.get('nom_produit')]
+            if noms_ventes:
+                top_p_nom, top_p_cnt = Counter(noms_ventes).most_common(1)[0]
+                gerant_insights.append({
+                    'badge': 'Top Vente',
+                    'bg': 'success',
+                    'icon': 'fa-star',
+                    'titre': 'Votre produit phare',
+                    'message': f"L'article <b>{top_p_nom}</b> est votre champion avec <b>{top_p_cnt} vente(s)</b> enregistrée(s). Veillez à ne jamais être en rupture !"
+                })
+
+            # 2. Gestion de l'alerte stock
+            if alertes_count > 0:
+                gerant_insights.append({
+                    'badge': 'Attention',
+                    'bg': 'danger',
+                    'icon': 'fa-box-open',
+                    'titre': 'Réapprovisionnement requis',
+                    'message': f"Vous avez <b>{alertes_count} article(s)</b> dont le stock est égal ou inférieur au seuil d'alerte."
+                })
+            else:
+                gerant_insights.append({
+                    'badge': 'Optimal',
+                    'bg': 'info',
+                    'icon': 'fa-check-circle',
+                    'titre': 'Niveau de Stock Sain',
+                    'message': "Tous vos articles sont au-dessus de leur seuil de sécurité."
+                })
+
+            # 3. Conseil sur le CA
+            if ca_quincaillerie > 0:
+                gerant_insights.append({
+                    'badge': 'Activité',
+                    'bg': 'primary',
+                    'icon': 'fa-chart-line',
+                    'titre': 'Chiffre d\'Affaires Cumulé',
+                    'message': f"Vous avez généré <b>{ca_quincaillerie:,.0f} FCFA</b> sur {len(ventes)} vente(s) enregistrée(s)."
+                })
+
+            return render_template(
+                'index.html',
+                produits=produits,
+                ventes=ventes,
+                alertes_count=alertes_count,
+                info_quincaillerie=info_quincaillerie,
+                ca_quincaillerie=ca_quincaillerie,
+                valeur_stock_totale=valeur_stock_totale,
+                gerant_insights=gerant_insights
+            )
 
     return render_template(
         'index.html',
         produits=produits,
         ventes=ventes,
         alertes_count=alertes_count,
-        info_quincaillerie=info_quincaillerie
+        info_quincaillerie=info_quincaillerie,
+        ca_quincaillerie=0,
+        valeur_stock_totale=0,
+        gerant_insights=[]
     )
 
 @app.route('/login', methods=['POST'])
@@ -238,7 +296,7 @@ def logout():
     flash("Vous êtes déconnecté.", "info")
     return redirect(url_for('index'))
 
-# --- ESPACE SUPER ADMIN ---
+# --- ACTIONS ESPACE SUPER ADMIN ---
 
 @app.route('/admin/creer-quincaillerie', methods=['POST'])
 def creer_quincaillerie():
@@ -322,7 +380,7 @@ def supprimer_quincaillerie(id):
     flash("Quincaillerie et toutes ses données supprimées définitivement.", "info")
     return redirect(url_for('index'))
 
-# --- ESPACE QUINCAILLERIE (CLIENT) ---
+# --- ACTIONS ESPACE QUINCAILLERIE (GERANT) ---
 
 @app.route('/ajouter-stock', methods=['POST'])
 def ajouter_stock():
