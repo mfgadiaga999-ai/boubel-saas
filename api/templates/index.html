@@ -308,10 +308,19 @@
             <span class="navbar-brand fw-bold">
                 <i class="fa-solid fa-store me-2"></i> {{ info_quincaillerie.nom_entreprise if info_quincaillerie else 'Ma Quincaillerie' }}
             </span>
-            <div class="d-flex align-items-center gap-3 text-white">
-                <span class="small"><i class="fa-solid fa-user me-1"></i> Connecté: <b>{{ session.get('nom_utilisateur', 'gerant_demo') }}</b></span>
-                <a href="/logout" class="btn btn-outline-light btn-sm fw-bold">Déconnexion</a>
-                <button id="theme-toggle" class="btn btn-outline-secondary ms-auto me-2" onclick="toggleTheme()">
+            <div class="d-flex align-items-center gap-2 text-white">
+                <!-- Sélecteur de langue multilingue -->
+                <select id="language-select" class="form-select form-select-sm border-0 bg-light fw-bold" onchange="changerLangue(this.value)" style="width: auto; cursor: pointer;">
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="wo">🇸🇳 Wolof</option>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="es">🇪🇸 Español</option>
+                </select>
+
+                <span class="small d-none d-md-inline"><i class="fa-solid fa-user me-1"></i> <span data-i18n="connecte">Connecté</span>: <b>{{ session.get('nom_utilisateur', 'gerant_demo') }}</b></span>
+                <a href="/logout" class="btn btn-outline-light btn-sm fw-bold" data-i18n="deconnexion">Déconnexion</a>
+                <button id="theme-toggle" class="btn btn-outline-secondary ms-auto" onclick="toggleTheme()">
                     <i id="theme-icon" class="fas fa-moon"></i>
                 </button>
             </div>
@@ -341,9 +350,9 @@
             <div class="alert alert-warning border-0 rounded-3 mb-4 d-flex flex-wrap align-items-center justify-content-between p-3 shadow-sm" style="background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%); color: #78350f;">
                 <div class="d-flex align-items-center mb-1 mb-md-0">
                     <span class="badge bg-warning text-dark me-2">MODE DÉMO</span>
-                    <span class="fw-bold">Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !</span>
+                    <span class="fw-bold" data-i18n="banner_demo">Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !</span>
                 </div>
-                <a href="https://wa.me/221765244894?text=Bonjour,%20j'ai%20testé%20la%20démo%20de%20Boubel%20SaaS%20et%20je%20souhaite%20activer%20ma%20quincaillerie" target="_blank" class="btn btn-sm btn-success fw-bold rounded-pill px-3 shadow-sm">
+                <a href="https://wa.me/221765244894?text=Bonjour,%20j'ai%20testé%20la%20démo%20de%20Boubel%20SaaS%20et%20je%20souhaite%20activer%20ma%20quincaillerie" target="_blank" class="btn btn-sm btn-success fw-bold rounded-pill px-3 shadow-sm" data-i18n="btn_commander">
                     <i class="fab fa-whatsapp me-1"></i> Commander Ma Boutique
                 </a>
             </div>
@@ -351,14 +360,14 @@
 
             <!-- TITRE BIENVENUE -->
             <h3 class="fw-bold mb-4">
-                Bienvenue sur votre Dashboard {% if is_demo %}<span class="text-warning">(Démo)</span>{% endif %}
+                <span data-i18n="titre_dashboard">Bienvenue sur votre Dashboard</span> {% if is_demo %}<span class="text-warning">(Démo)</span>{% endif %}
             </h3>
 
             <!-- 1. KPI D'ACTIVITÉ GÉRANT -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm p-3 text-center bg-white border-start border-success border-4">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Chiffre d'Affaires</h6>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1" data-i18n="ca">Chiffre d'Affaires</h6>
                         <h3 class="fw-bold text-success mb-0">
                             {{ "{:,.0f}".format(ca_quincaillerie or 0) if ca_quincaillerie is defined else "0" }} 
                             <small class="fs-6 text-muted">FCFA</small>
@@ -367,7 +376,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm p-3 text-center bg-white border-start border-primary border-4">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Valeur Stock Immobilisé</h6>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1" data-i18n="valeur_stock">Valeur Stock Immobilisé</h6>
                         <h3 class="fw-bold text-primary mb-0">
                             {{ "{:,.0f}".format(valeur_stock_totale or 0) if valeur_stock_totale is defined else "0" }} 
                             <small class="fs-6 text-muted">FCFA</small>
@@ -376,19 +385,19 @@
                 </div>
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm p-3 text-center bg-white border-start border-info border-4">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Total Articles Stock</h6>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1" data-i18n="total_articles">Total Articles Stock</h6>
                         <h3 class="fw-bold text-info mb-0">
                             {{ produits|length if produits is defined else 0 }} 
-                            <small class="fs-6 text-muted">références</small>
+                            <small class="fs-6 text-muted" data-i18n="references">références</small>
                         </h3>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm p-3 text-center bg-white border-start border-danger border-4">
-                        <h6 class="text-muted small fw-bold text-uppercase mb-1">Alertes Recommandation</h6>
+                        <h6 class="text-muted small fw-bold text-uppercase mb-1" data-i18n="alertes">Alertes Recommandation</h6>
                         <h3 class="fw-bold text-danger mb-0">
                             {{ alertes_count if alertes_count is defined else 0 }} 
-                            <small class="fs-6 text-muted">critiques</small>
+                            <small class="fs-6 text-muted" data-i18n="critiques">critiques</small>
                         </h3>
                     </div>
                 </div>
@@ -398,7 +407,7 @@
             {% if gerant_insights %}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                    <span><i class="fa-solid fa-robot text-warning me-2"></i> Assistant Intelligent de la Quincaillerie</span>
+                    <span><i class="fa-solid fa-robot text-warning me-2"></i> <span data-i18n="assistant_titre">Assistant Intelligent de la Quincaillerie</span></span>
                     <span class="badge bg-warning text-dark">Smart Pilot</span>
                 </div>
                 <div class="card-body bg-white p-3">
@@ -430,29 +439,31 @@
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-primary text-white fw-bold">
-                            <i class="fa-solid fa-box me-1"></i> Ajouter / Réapprovisionner un Produit
+                            <i class="fa-solid fa-box me-1"></i> <span data-i18n="ajouter_produit_titre">Ajouter / Réapprovisionner un Produit</span>
                         </div>
                         <div class="card-body">
                             <form action="/ajouter-stock" method="POST">
                                 <div class="row g-2">
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold">Nom de l'Article</label>
+                                        <label class="form-label small fw-bold" data-i18n="lbl_nom_article">Nom de l'Article</label>
                                         <input type="text" name="nom" class="form-control form-control-sm" placeholder="ex: Ciment SOCOCIM 50kg" required>
                                     </div>
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold">Prix Unitaire (FCFA)</label>
+                                        <label class="form-label small fw-bold" data-i18n="lbl_prix_unitaire">Prix Unitaire (FCFA)</label>
                                         <input type="number" step="0.01" name="prix" class="form-control form-control-sm" placeholder="ex: 4500" required>
                                     </div>
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold">Quantité Ajoutée</label>
+                                        <label class="form-label small fw-bold" data-i18n="lbl_quantite_ajoutee">Quantité Ajoutée</label>
                                         <input type="number" name="quantite" class="form-control form-control-sm" placeholder="ex: 20" required>
                                     </div>
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold">Seuil d'Alerte Stock</label>
+                                        <label class="form-label small fw-bold" data-i18n="lbl_seuil_alerte">Seuil d'Alerte Stock</label>
                                         <input type="number" name="seuil_alerte" value="5" class="form-control form-control-sm" required>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-success btn-sm w-100 fw-bold mt-2"><i class="fa-solid fa-plus me-1"></i> Enregistrer en Stock</button>
+                                <button type="submit" class="btn btn-success btn-sm w-100 fw-bold mt-2">
+                                    <i class="fa-solid fa-plus me-1"></i> <span data-i18n="btn_ajouter">Enregistrer en Stock</span>
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -462,15 +473,15 @@
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-success text-white fw-bold">
-                            <i class="fa-solid fa-cart-shopping me-1"></i> Enregistrer une Vente
+                            <i class="fa-solid fa-cart-shopping me-1"></i> <span data-i18n="enregistrer_vente_titre">Enregistrer une Vente</span>
                         </div>
                         <div class="card-body">
                             <form action="/ajouter-vente" method="POST" onsubmit="enregistrerVente(event)">
                                 <div class="row g-2">
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold">Sélectionner l'Article</label>
+                                        <label class="form-label small fw-bold" data-i18n="lbl_selectionner_article">Sélectionner l'Article</label>
                                         <select name="nom" class="form-select form-select-sm" required>
-                                            <option value="">-- Choisir un produit --</option>
+                                            <option value="" data-i18n="opt_choisir_produit">-- Choisir un produit --</option>
                                             {% if produits %}
                                                 {% for p in produits %}
                                                     <option value="{{ p.nom_affichage }}">{{ p.nom_affichage }} (Stock: {{ p.stock_total }})</option>
@@ -479,11 +490,13 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold">Quantité Vendue</label>
+                                        <label class="form-label small fw-bold" data-i18n="lbl_quantite_vendue">Quantité Vendue</label>
                                         <input type="number" name="quantite" min="1" value="1" class="form-control form-control-sm" required>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold mt-2"><i class="fa-solid fa-check me-1"></i> Valider la Vente</button>
+                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold mt-2">
+                                    <i class="fa-solid fa-check me-1"></i> <span data-i18n="btn_valider_vente">Valider la Vente</span>
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -495,10 +508,14 @@
                 <div class="card-header bg-white border-bottom-0">
                     <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link active fw-bold" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock" type="button"><i class="fa-solid fa-cubes me-1"></i> Etat du Stock ({{ produits|length if produits is defined else 0 }})</button>
+                            <button class="nav-link active fw-bold" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock" type="button">
+                                <i class="fa-solid fa-cubes me-1"></i> <span data-i18n="onglets_stock">État du Stock</span> ({{ produits|length if produits is defined else 0 }})
+                            </button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link fw-bold" id="ventes-tab" data-bs-toggle="tab" data-bs-target="#ventes" type="button"><i class="fa-solid fa-list-check me-1"></i> Historique des Ventes ({{ ventes|length if ventes is defined else 0 }})</button>
+                            <button class="nav-link fw-bold" id="ventes-tab" data-bs-toggle="tab" data-bs-target="#ventes" type="button">
+                                <i class="fa-solid fa-list-check me-1"></i> <span data-i18n="onglets_ventes">Historique des Ventes</span> ({{ ventes|length if ventes is defined else 0 }})
+                            </button>
                         </li>
                     </ul>
                 </div>
@@ -511,11 +528,11 @@
                                 <table class="table table-adaptive align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Nom Produit</th>
-                                            <th>Prix Unitaire</th>
-                                            <th>Stock Restant</th>
-                                            <th>Statut</th>
-                                            <th class="text-center">Actions</th>
+                                            <th data-i18n="th_nom_produit">Nom Produit</th>
+                                            <th data-i18n="th_prix_unitaire">Prix Unitaire</th>
+                                            <th data-i18n="th_stock_restant">Stock Restant</th>
+                                            <th data-i18n="th_statut">Statut</th>
+                                            <th class="text-center" data-i18n="th_actions">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -527,9 +544,9 @@
                                                 <td data-label="Stock Restant"><span class="badge bg-secondary fs-6">{{ p.stock_total }}</span></td>
                                                 <td data-label="Statut">
                                                     {% if p.stock_total <= p.seuil_alerte %}
-                                                        <span class="badge bg-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Alerte Seuil</span>
+                                                        <span class="badge bg-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> <span data-i18n="st_alerte">Alerte Seuil</span></span>
                                                     {% else %}
-                                                        <span class="badge bg-success">En Stock</span>
+                                                        <span class="badge bg-success" data-i18n="st_en_stock">En Stock</span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="text-center" data-label="Actions">
@@ -538,7 +555,7 @@
                                             </tr>
                                             {% endfor %}
                                         {% else %}
-                                            <tr><td colspan="5" class="text-center text-muted py-3">Aucun produit enregistré.</td></tr>
+                                            <tr><td colspan="5" class="text-center text-muted py-3" data-i18n="aucun_produit">Aucun produit enregistré.</td></tr>
                                         {% endif %}
                                     </tbody>
                                 </table>
@@ -551,13 +568,13 @@
                                 <table class="table table-adaptive align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Produit</th>
-                                            <th>Quantité</th>
-                                            <th>Prix Vente</th>
-                                            <th>Total</th>
-                                            <th>Vendu par</th>
-                                            <th class="text-center">Action</th>
+                                            <th data-i18n="th_date">Date</th>
+                                            <th data-i18n="th_produit">Produit</th>
+                                            <th data-i18n="th_quantite">Quantité</th>
+                                            <th data-i18n="th_prix_vente">Prix Vente</th>
+                                            <th data-i18n="th_total">Total</th>
+                                            <th data-i18n="th_vendu_par">Vendu par</th>
+                                            <th class="text-center" data-i18n="th_action">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -571,12 +588,12 @@
                                                 <td class="fw-bold text-success" data-label="Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Vendu par"><span class="badge bg-light text-dark border">{{ v.vendu_par }}</span></td>
                                                 <td class="text-center" data-label="Action">
-                                                    <a href="/supprimer-vente/{{ v.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette vente ? Le stock sera restitué.')"><i class="fa-solid fa-rotate-left"></i> Annuler</a>
+                                                    <a href="/supprimer-vente/{{ v.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette vente ? Le stock sera restitué.')"><i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_annuler">Annuler</span></a>
                                                 </td>
                                             </tr>
                                             {% endfor %}
                                         {% else %}
-                                            <tr><td colspan="7" class="text-center text-muted py-3">Aucune vente enregistrée.</td></tr>
+                                            <tr><td colspan="7" class="text-center text-muted py-3" data-i18n="aucune_vente">Aucune vente enregistrée.</td></tr>
                                         {% endif %}
                                     </tbody>
                                 </table>
@@ -598,8 +615,8 @@
             <!-- En-tête de la carte -->
             <div class="text-center mb-4">
                 <i class="fa-solid fa-store fa-3x text-primary mb-2"></i>
-                <h4 class="fw-bold text-dark">Connexion SaaS</h4>
-                <p class="text-muted small">Espace Quincaillerie & Administration</p>
+                <h4 class="fw-bold text-dark" data-i18n="connexion_titre">Connexion SaaS</h4>
+                <p class="text-muted small" data-i18n="connexion_sous_titre">Espace Quincaillerie & Administration</p>
             </div>
 
             <!-- Messages d'erreur / succès Flash -->
@@ -617,29 +634,29 @@
             <!-- Formulaire de connexion -->
             <form action="/login" method="POST">
                 <div class="mb-3">
-                    <label class="form-label small fw-bold">Identifiant</label>
+                    <label class="form-label small fw-bold" data-i18n="identifiant">Identifiant</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
                         <input type="text" name="identifiant" class="form-control" required placeholder="Votre identifiant">
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold">Mot de passe</label>
+                    <label class="form-label small fw-bold" data-i18n="mot_de_passe">Mot de passe</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
                         <input type="password" name="mot_de_passe" class="form-control" required placeholder="••••••••">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 fw-bold py-2 mt-2">
-                    <i class="fa-solid fa-right-to-bracket me-1"></i> Se Connecter
+                    <i class="fa-solid fa-right-to-bracket me-1"></i> <span data-i18n="btn_se_connecter">Se Connecter</span>
                 </button>
             </form>
 
-            <!-- Bouton d'accès direct au Mode Démo (Intégré proprement au bas de la carte) -->
+            <!-- Bouton d'accès direct au Mode Démo -->
             <div class="text-center mt-4 pt-3 border-top">
-                <p class="text-muted small mb-2">Vous souhaitez découvrir la plateforme ?</p>
+                <p class="text-muted small mb-2" data-i18n="question_decouvrir">Vous souhaitez découvrir la plateforme ?</p>
                 <a href="/demo" class="btn btn-outline-success rounded-pill w-100 fw-bold py-2">
-                    <i class="fas fa-rocket me-1"></i> Tester la Démo Gratuite
+                    <i class="fas fa-rocket me-1"></i> <span data-i18n="btn_tester_demo">Tester la Démo Gratuite</span>
                 </a>
             </div>
 
@@ -648,7 +665,7 @@
     {% endif %}
 
     <!-- =========================================================
-        WIDGET CHATBOT INTERACTIF ET VOCAL EN WOLOF
+        WIDGET CHATBOT INTERACTIF ET VOCAL MULTILINGUE
         ========================================================= -->
 
     <!-- Bouton Flottant (Bulle de discussion) -->
@@ -664,8 +681,8 @@
             <div class="d-flex align-items-center">
                 <i class="fas fa-robot fa-lg me-2"></i>
                 <div>
-                    <h6 class="mb-0 font-weight-bold">Dimbalikaw Quincaillerie 🔊</h6>
-                    <small style="font-size: 11px; opacity: 0.9;">Mangi fi ngir wax ak dimbali leen</small>
+                    <h6 class="mb-0 font-weight-bold" data-i18n="cb_nom">Dimbalikaw Quincaillerie 🔊</h6>
+                    <small style="font-size: 11px; opacity: 0.9;" data-i18n="cb_sous_titre">Mangi fi ngir wax ak dimbali leen</small>
                 </div>
             </div>
             <button type="button" class="btn-close btn-close-white" onclick="toggleChatbot()"></button>
@@ -673,12 +690,12 @@
 
         <!-- Corps de la discussion -->
         <div id="chatbot-messages" class="card-body p-3" style="overflow-y: auto; flex-grow: 1; background-color: #f8fafc;">
-            <!-- Message de bienvenue en Wolof avec bouton vocal -->
+            <!-- Message de bienvenue avec bouton vocal -->
             <div class="d-flex mb-3 align-items-start">
-                <div class="bg-white p-2 px-3 rounded shadow-sm border me-2" style="max-width: 80%; font-size: 13px; color: #333;">
+                <div class="bg-white p-2 px-3 rounded shadow-sm border me-2" style="max-width: 80%; font-size: 13px; color: #333;" data-i18n="cb_welcome">
                     👋 Nanga def ! Lu ma la mën a dimbali tay ?
                 </div>
-                <button class="btn btn-sm btn-outline-secondary rounded-circle p-1 px-2" onclick="parlerTexte('Nanga def ! Lu ma la mën a dimbali tay ?')" title="Déglu (Écouter)">
+                <button class="btn btn-sm btn-outline-secondary rounded-circle p-1 px-2" onclick="parlerTexte(this.previousElementSibling.innerText)" title="Écouter">
                     <i class="fas fa-volume-up"></i>
                 </button>
             </div>
@@ -687,7 +704,7 @@
         <!-- Pied de page avec champ de saisie -->
         <div class="card-footer bg-white border-top p-2">
             <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
-                <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Lacc-al sa question fii..." required autocomplete="off">
+                <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Posez une question..." required autocomplete="off">
                 <button type="submit" class="btn btn-primary btn-sm px-3">
                     <i class="fas fa-paper-plane"></i>
                 </button>
@@ -698,6 +715,320 @@
     <!-- Scripts Bootstrap et Logique JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Dictionnaire complet des traductions de l'interface
+        const dictionnaireTraductions = {
+            fr: {
+                connecte: "Connecté",
+                deconnexion: "Déconnexion",
+                banner_demo: "Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !",
+                btn_commander: "Commander Ma Boutique",
+                titre_dashboard: "Bienvenue sur votre Dashboard",
+                ca: "Chiffre d'Affaires",
+                valeur_stock: "Valeur Stock Immobilisé",
+                total_articles: "Total Articles Stock",
+                references: "références",
+                alertes: "Alertes Recommandation",
+                critiques: "critiques",
+                assistant_titre: "Assistant Intelligent de la Quincaillerie",
+                ajouter_produit_titre: "Ajouter / Réapprovisionner un Produit",
+                lbl_nom_article: "Nom de l'Article",
+                lbl_prix_unitaire: "Prix Unitaire (FCFA)",
+                lbl_quantite_ajoutee: "Quantité Ajoutée",
+                lbl_seuil_alerte: "Seuil d'Alerte Stock",
+                btn_ajouter: "Enregistrer en Stock",
+                enregistrer_vente_titre: "Enregistrer une Vente",
+                lbl_selectionner_article: "Sélectionner l'Article",
+                opt_choisir_produit: "-- Choisir un produit --",
+                lbl_quantite_vendue: "Quantité Vendue",
+                btn_valider_vente: "Valider la Vente",
+                onglets_stock: "État du Stock",
+                onglets_ventes: "Historique des Ventes",
+                th_nom_produit: "Nom Produit",
+                th_prix_unitaire: "Prix Unitaire",
+                th_stock_restant: "Stock Restant",
+                th_statut: "Statut",
+                th_actions: "Actions",
+                st_alerte: "Alerte Seuil",
+                st_en_stock: "En Stock",
+                aucun_produit: "Aucun produit enregistré.",
+                th_date: "Date",
+                th_produit: "Produit",
+                th_quantite: "Quantité",
+                th_prix_vente: "Prix Vente",
+                th_total: "Total",
+                th_vendu_par: "Vendu par",
+                th_action: "Action",
+                btn_annuler: "Annuler",
+                aucune_vente: "Aucune vente enregistrée.",
+                connexion_titre: "Connexion SaaS",
+                connexion_sous_titre: "Espace Quincaillerie & Administration",
+                identifiant: "Identifiant",
+                mot_de_passe: "Mot de passe",
+                btn_se_connecter: "Se Connecter",
+                question_decouvrir: "Vous souhaitez découvrir la plateforme ?",
+                btn_tester_demo: "Tester la Démo Gratuite",
+                cb_nom: "Dimbalikaw Quincaillerie 🔊",
+                cb_sous_titre: "Mangi fi ngir wax ak dimbali leen",
+                cb_welcome: "👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?"
+            },
+            wo: {
+                connecte: "Mangi fi",
+                deconnexion: "Génn",
+                banner_demo: "Yanga gi tester en mode démonstration. Sa données réelles dinan sécurisé !",
+                btn_commander: "Commander Ma Boutique",
+                titre_dashboard: "Dalal ak jamm ci sa Tableau de bord",
+                ca: "Xalis bi nga jaay",
+                valeur_stock: "Njeundou stock bi fi nekk",
+                total_articles: "Limou Marchandise yi",
+                references: "mféférencs",
+                alertes: "Avertissements",
+                critiques: "jafe-jafe",
+                assistant_titre: "Dimbalikaw Intelligent bi",
+                ajouter_produit_titre: "Yokk walla fessal Stock",
+                lbl_nom_article: "Tourou Marchandise bi",
+                lbl_prix_unitaire: "Prix bi (FCFA)",
+                lbl_quantite_ajoutee: "Lim bi nga yokk",
+                lbl_seuil_alerte: "Seuil d'Alerte",
+                btn_ajouter: "Dënk ci Stock bi",
+                enregistrer_vente_titre: "Bind Jaay (Vente)",
+                lbl_selectionner_article: "Tanlal Marchandise bi",
+                opt_choisir_produit: "-- Tanlal produit --",
+                lbl_quantite_vendue: "Lim bi nga jaay",
+                btn_valider_vente: "Daccordal Jaay bi",
+                onglets_stock: "Lifi nekk ci Stock",
+                onglets_ventes: "Linga jaay yëpp",
+                th_nom_produit: "Tourou Produit",
+                th_prix_unitaire: "Prix bi",
+                th_stock_restant: "Lifi des",
+                th_statut: "Statut",
+                th_actions: "Jëf",
+                st_alerte: "Alerte Seuil",
+                st_en_stock: "Am na ci Stock",
+                aucun_produit: "Amul benn produit.",
+                th_date: "Date",
+                th_produit: "Produit",
+                th_quantite: "Lim",
+                th_prix_vente: "Prix Vente",
+                th_total: "Total",
+                th_vendu_par: "Kiko jaay",
+                th_action: "Jëf",
+                btn_annuler: "Annuler",
+                aucune_vente: "Amul benn vente.",
+                connexion_titre: "Connexion SaaS",
+                connexion_sous_titre: "Espace Quincaillerie",
+                identifiant: "Identifiant",
+                mot_de_passe: "Mot de passe",
+                btn_se_connecter: "Se Connecter",
+                question_decouvrir: "Danga beggé xam plateforme bi ?",
+                btn_tester_demo: "Tester Démo bi",
+                cb_nom: "Dimbalikaw Quincaillerie 🔊",
+                cb_sous_titre: "Mangi fi ngir wax ak dimbali leen",
+                cb_welcome: "👋 Nanga def ! Lu ma la mën a dimbali tay ?"
+            },
+            en: {
+                connecte: "Logged in",
+                deconnexion: "Logout",
+                banner_demo: "You are testing the demo interface. Your real data will be completely secure!",
+                btn_commander: "Order My Store",
+                titre_dashboard: "Welcome to your Dashboard",
+                ca: "Revenue / Turnover",
+                valeur_stock: "Total Stock Value",
+                total_articles: "Total Items in Stock",
+                references: "items",
+                alertes: "Stock Alerts",
+                critiques: "critical",
+                assistant_titre: "Smart Hardware Assistant",
+                ajouter_produit_titre: "Add / Restock a Product",
+                lbl_nom_article: "Item Name",
+                lbl_prix_unitaire: "Unit Price (FCFA)",
+                lbl_quantite_ajoutee: "Added Quantity",
+                lbl_seuil_alerte: "Stock Alert Threshold",
+                btn_ajouter: "Save to Stock",
+                enregistrer_vente_titre: "Record a Sale",
+                lbl_selectionner_article: "Select Item",
+                opt_choisir_produit: "-- Choose a product --",
+                lbl_quantite_vendue: "Sold Quantity",
+                btn_valider_vente: "Confirm Sale",
+                onglets_stock: "Stock Inventory",
+                onglets_ventes: "Sales History",
+                th_nom_produit: "Product Name",
+                th_prix_unitaire: "Unit Price",
+                th_stock_restant: "Remaining Stock",
+                th_statut: "Status",
+                th_actions: "Actions",
+                st_alerte: "Low Stock Alert",
+                st_en_stock: "In Stock",
+                aucun_produit: "No products recorded.",
+                th_date: "Date",
+                th_produit: "Product",
+                th_quantite: "Quantity",
+                th_prix_vente: "Selling Price",
+                th_total: "Total",
+                th_vendu_par: "Sold by",
+                th_action: "Action",
+                btn_annuler: "Cancel",
+                aucune_vente: "No sales recorded.",
+                connexion_titre: "SaaS Login",
+                connexion_sous_titre: "Hardware & Admin Space",
+                identifiant: "Username",
+                mot_de_passe: "Password",
+                btn_se_connecter: "Log In",
+                question_decouvrir: "Would you like to discover the platform?",
+                btn_tester_demo: "Try Free Demo",
+                cb_nom: "Hardware Assistant 🔊",
+                cb_sous_titre: "Here to speak and help you",
+                cb_welcome: "👋 Hello! How can I help you today?"
+            },
+            ar: {
+                connecte: "متصل",
+                deconnexion: "تسجيل الخروج",
+                banner_demo: "أنت تختبر الواجهة في الوضع التجريبي. بياناتك الحقيقية آمنة تماماً!",
+                btn_commander: "اطلب متجري الآن",
+                titre_dashboard: "مرحباً بك في لوحة التحكم",
+                ca: "إجمالي المبيعات",
+                valeur_stock: "قيمة المخزون الإجمالية",
+                total_articles: "إجمالي المنتجات",
+                references: "عناصر",
+                alertes: "تنبيهات المخزون",
+                critiques: "حرجة",
+                assistant_titre: "المساعد الذكي للمحل",
+                ajouter_produit_titre: "إضافة / إعادة تزويد منتج",
+                lbl_nom_article: "اسم المنتج",
+                lbl_prix_unitaire: "سعر الوحدة (FCFA)",
+                lbl_quantite_ajoutee: "الكمية المضافة",
+                lbl_seuil_alerte: "حد تنبيه المخزون",
+                btn_ajouter: "حفظ في المخزون",
+                enregistrer_vente_titre: "تسجيل عملية بيع",
+                lbl_selectionner_article: "اختر المنتج",
+                opt_choisir_produit: "-- اختر منتجاً --",
+                lbl_quantite_vendue: "الكمية المباعة",
+                btn_valider_vente: "تأكيد البيع",
+                onglets_stock: "حالة المخزون",
+                onglets_ventes: "سجل المبيعات",
+                th_nom_produit: "اسم المنتج",
+                th_prix_unitaire: "سعر الوحدة",
+                th_stock_restant: "المخزون المتبقي",
+                th_statut: "الحالة",
+                th_actions: "الإجراءات",
+                st_alerte: "تنبيه انخفاض المخزون",
+                st_en_stock: "متوفر",
+                aucun_produit: "لا يوجد منتجات مسجلة.",
+                th_date: "التاريخ",
+                th_produit: "المنتج",
+                th_quantite: "الكمية",
+                th_prix_vente: "سعر البيع",
+                th_total: "المجموع",
+                th_vendu_par: "بواسطة",
+                th_action: "إجراء",
+                btn_annuler: "إلغاء",
+                aucune_vente: "لا يوجد مبيعات مسجلة.",
+                connexion_titre: "تسجيل الدخول",
+                connexion_sous_titre: "منصة إدارة الخردوات",
+                identifiant: "اسم المستخدم",
+                mot_de_passe: "كلمة المرور",
+                btn_se_connecter: "دخول",
+                question_decouvrir: "هل ترغب في اكتشاف المنصة؟",
+                btn_tester_demo: "تجربة النسخة التجريبية",
+                cb_nom: "مساعد الخردوات 🔊",
+                cb_sous_titre: "أنا هنا لمساعدتك والتحدث معك",
+                cb_welcome: "👋 مرحباً بك! كيف يمكنني مساعدتك اليوم؟"
+            },
+            es: {
+                connecte: "Conectado",
+                deconnexion: "Cerrar sesión",
+                banner_demo: "Está probando la interfaz en modo demostración. ¡Sus datos reales estarán totalmente seguros!",
+                btn_commander: "Ordenar Mi Tienda",
+                titre_dashboard: "Bienvenido a su Panel de Control",
+                ca: "Ingresos Totales",
+                valeur_stock: "Valor Total del Inventario",
+                total_articles: "Total de Artículos",
+                references: "referencias",
+                alertes: "Alertas de Stock",
+                critiques: "críticas",
+                assistant_titre: "Asistente Inteligente de Ferretería",
+                ajouter_produit_titre: "Añadir / Reabastecer Producto",
+                lbl_nom_article: "Nombre del Artículo",
+                lbl_prix_unitaire: "Precio Unitario (FCFA)",
+                lbl_quantite_ajoutee: "Cantidad Añadida",
+                lbl_seuil_alerte: "Umbral de Alerta",
+                btn_ajouter: "Guardar en Inventario",
+                enregistrer_vente_titre: "Registrar una Venta",
+                lbl_selectionner_article: "Seleccionar Artículo",
+                opt_choisir_produit: "-- Elegir un producto --",
+                lbl_quantite_vendue: "Cantidad Vendida",
+                btn_valider_vente: "Confirmar Venta",
+                onglets_stock: "Estado del Inventario",
+                onglets_ventes: "Historial de Ventas",
+                th_nom_produit: "Nombre del Producto",
+                th_prix_unitaire: "Precio Unitario",
+                th_stock_restant: "Stock Restante",
+                th_statut: "Estado",
+                th_actions: "Acciones",
+                st_alerte: "Alerta de Stock Bajo",
+                st_en_stock: "En Stock",
+                aucun_produit: "No hay productos registrados.",
+                th_date: "Fecha",
+                th_produit: "Producto",
+                th_quantite: "Cantidad",
+                th_prix_vente: "Precio de Venta",
+                th_total: "Total",
+                th_vendu_par: "Vendido por",
+                th_action: "Acción",
+                btn_annuler: "Cancelar",
+                aucune_vente: "No hay ventas registradas.",
+                connexion_titre: "Iniciar Sesión",
+                connexion_sous_titre: "Espacio de Ferretería y Admin",
+                identifiant: "Usuario",
+                mot_de_passe: "Contraseña",
+                btn_se_connecter: "Acceder",
+                question_decouvrir: "¿Desea descubrir la plataforma?",
+                btn_tester_demo: "Probar Demo Gratis",
+                cb_nom: "Asistente de Ferretería 🔊",
+                cb_sous_titre: "Aquí para ayudarte y hablar contigo",
+                cb_welcome: "👋 ¡Hola! ¿En qué puedo ayudarte hoy?"
+            }
+        };
+
+        // Fonction pour traduire dynamiquement l'interface
+        function changerLangue(langue) {
+            localStorage.setItem('langue_preferee', langue);
+
+            if (langue === 'ar') {
+                document.body.dir = 'rtl';
+                document.body.style.textAlign = 'right';
+            } else {
+                document.body.dir = 'ltr';
+                document.body.style.textAlign = 'left';
+            }
+
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(element => {
+                const cle = element.getAttribute('data-i18n');
+                if (dictionnaireTraductions[langue] && dictionnaireTraductions[langue][cle]) {
+                    element.innerText = dictionnaireTraductions[langue][cle];
+                }
+            });
+        }
+
+        // Appliquer la langue enregistrée au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const icon = document.getElementById('theme-icon');
+            
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                if (icon) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                }
+            }
+
+            const langueSauvegardee = localStorage.getItem('langue_preferee') || 'fr';
+            const select = document.getElementById('language-select');
+            if (select) select.value = langueSauvegardee;
+            changerLangue(langueSauvegardee);
+        });
+
         // Fonction pour basculer le thème
         function toggleTheme() {
             const body = document.body;
@@ -720,27 +1051,13 @@
             }
         }
 
-        // Appliquer le thème sauvegardé au chargement de la page
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme');
-            const icon = document.getElementById('theme-icon');
-            
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                if (icon) {
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                }
-            }
-        });
-
-        // Fonction pour lire le texte à voix haute (Synthèse vocale)
-        function parlerTexte(texte) {
+        // Fonction pour lire le texte à voix haute (Synthèse vocale multilingue)
+        function parlerTexte(texte, lang = 'fr-FR') {
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // Arrêter toute lecture en cours
+                window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(texte);
-                utterance.lang = 'fr-FR'; // Utilise le moteur phonétique fluide
-                utterance.rate = 0.95;    // Vitesse de parole naturelle
+                utterance.lang = lang;
+                utterance.rate = 0.95;
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -765,7 +1082,7 @@
             }
         }
 
-        function ajouterMessage(texte, estUtilisateur = false) {
+        function ajouterMessage(texte, estUtilisateur = false, lang = 'fr-FR') {
             const container = document.getElementById('chatbot-messages');
             const wrapper = document.createElement('div');
             wrapper.className = `d-flex mb-3 align-items-start ${estUtilisateur ? 'justify-content-end' : ''}`;
@@ -780,45 +1097,118 @@
 
             wrapper.appendChild(bulle);
 
-            // Ajouter le bouton de lecture vocale pour le chatbot
             if (!estUtilisateur) {
                 const btnVocal = document.createElement('button');
                 btnVocal.className = 'btn btn-sm btn-outline-secondary rounded-circle p-1 px-2';
-                btnVocal.title = 'Déglu (Écouter)';
+                btnVocal.title = 'Écouter';
                 btnVocal.innerHTML = '<i class="fas fa-volume-up"></i>';
-                btnVocal.onclick = () => parlerTexte(texte);
+                btnVocal.onclick = () => parlerTexte(texte, lang);
                 wrapper.appendChild(btnVocal);
             }
 
             container.appendChild(wrapper);
             container.scrollTop = container.scrollHeight;
 
-            // Lecture automatique du message du chatbot
             if (!estUtilisateur) {
-                parlerTexte(texte);
+                parlerTexte(texte, lang);
             }
         }
 
         function repondreChatbot(question) {
             const q = question.toLowerCase();
-            let reponse = "Baal ma, degguma li nga wax. So beggé dimbal gu gaw, woowal sa Admin.";
+            let reponse = "";
+            let lang = 'fr-FR';
 
-            if (q.includes('mot de passe') || q.includes('passe') || q.includes('faté') || q.includes('connexion') || q.includes('connecter') || q.includes('login')) {
-                reponse = "So fatée sa mot de passe walla sa identifiant, woowal Super Admin bi ngir mu fadial la ko.";
-            } else if (q.includes('stock') || q.includes('yokk') || q.includes('produit') || q.includes('marchandise') || q.includes('article')) {
-                reponse = "Ngir yokk produit ci stock bi, bindal tourou marchandise bi ak prix bi ci bloc 'Ajouter / Réapprovisionner un Produit'.";
-            } else if (q.includes('jaay') || q.includes('vente') || q.includes('vendre') || q.includes('bind')) {
-                reponse = "So beggé bind jaay (vente), tanlal produit bi ci bloc 'Enregistrer une Vente', bind quantité bi nga jaay ba noppi nga cliquer 'Valider'.";
-            } else if (q.includes('nanga def') || q.includes('mangi fi') || q.includes('bonjour') || q.includes('salut') || q.includes('jama') || q.includes('kasumay')) {
-                reponse = "Mangi fi rekk jam rekk ! Lu ma la mën a dimbali tay ci gestion quincaillerie bi ?";
-            } else if (q.includes('xalis') || q.includes('chiffre') || q.includes('ca') || q.includes('wer') || q.includes('mois')) {
-                reponse = "Xalis bi nga gis (Chiffre d'affaires) dafa lay wan li nga jaay ci wér bi. Dafa koy réinitialiser chaque début du mois.";
-            } else if (q.includes('jerejef') || q.includes('merci') || q.includes('daccord') || q.includes('ok')) {
-                reponse = "Amul solo ! Mangi fi saa yo beggé dimbal. Jerejef !";
+            // 1. ANGLAIS
+            if (q.includes('hello') || q.includes('hi') || q.includes('how are you') || q.includes('help') || q.includes('password') || q.includes('stock') || q.includes('sell') || q.includes('sale') || q.includes('thanks') || q.includes('thank you')) {
+                lang = 'en-US';
+                if (q.includes('password') || q.includes('login') || q.includes('forgot')) {
+                    reponse = "If you forgot your password or username, please contact the Super Admin to reset it.";
+                } else if (q.includes('stock') || q.includes('product') || q.includes('add')) {
+                    reponse = "To add a new product or restock, fill in the product name and price in the 'Add / Restock Product' block.";
+                } else if (q.includes('sell') || q.includes('sale')) {
+                    reponse = "To record a sale, select the item in the 'Record a Sale' section, enter the quantity, and click 'Validate'.";
+                } else if (q.includes('hello') || q.includes('hi') || q.includes('how are you')) {
+                    reponse = "Hello! I am your assistant. How can I help you manage your hardware store today?";
+                } else if (q.includes('thanks') || q.includes('thank you')) {
+                    reponse = "You're welcome! I am here whenever you need help.";
+                } else {
+                    reponse = "I didn't quite catch that. How can I assist you with your inventory or sales?";
+                }
+
+            // 2. ARABE
+            } else if (q.includes('مرحبا') || q.includes('سلام') || q.includes('كيف') || q.includes('كلمة السر') || q.includes('مخزون') || q.includes('بيع') || q.includes('شكرا')) {
+                lang = 'ar-SA';
+                if (q.includes('كلمة السر') || q.includes('دخول')) {
+                    reponse = "إذا نسيت كلمة المرور أو اسم المستخدم، يرجى الاتصال بالمسؤول لإعادة ضبطها.";
+                } else if (q.includes('مخزون') || q.includes('منتج') || q.includes('إضافة')) {
+                    reponse = "لإضافة منتج جديد، أدخل اسم المنتج والسعر في قسم 'إضافة / إعادة تزويد المنتج'.";
+                } else if (q.includes('بيع')) {
+                    reponse = "لتسجيل عملية بيع، اختر المنتج من قسم 'تسجيل البيع'، أدخل الكمية ثم انقر على 'تأكيد'.";
+                } else if (q.includes('مرحبا') || q.includes('سلام')) {
+                    reponse = "مرحباً بك! أنا مساعدك الذكي، كيف يمكنني مساعدتك اليوم في إدارة الخردوات؟";
+                } else if (q.includes('شكرا')) {
+                    reponse = "على الرحب والسعة! أنا هنا دائماً لمساعدتك.";
+                } else {
+                    reponse = "عذراً، لم أفهم طلبك جيدا. كيف يمكنني مساعدتك؟";
+                }
+
+            // 3. ESPAGNOL
+            } else if (q.includes('hola') || q.includes('buenos') || q.includes('contraseña') || q.includes('inventario') || q.includes('venta') || q.includes('vender') || q.includes('gracias')) {
+                lang = 'es-ES';
+                if (q.includes('contraseña') || q.includes('clave') || q.includes('olvidé')) {
+                    reponse = "Si olvidaste tu contraseña o usuario, contacta al Súper Administrador para restablecerlo.";
+                } else if (q.includes('inventario') || q.includes('producto') || q.includes('añadir')) {
+                    reponse = "Para añadir productos al inventario, completa el nombre y precio en la sección 'Añadir / Reabastecer Producto'.";
+                } else if (q.includes('venta') || q.includes('vender')) {
+                    reponse = "Para registrar una venta, selecciona el producto en 'Registrar una Venta', ingresa la cantidad y haz clic en 'Validar'.";
+                } else if (q.includes('hola') || q.includes('buenos')) {
+                    reponse = "¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy con la gestión de tu ferretería?";
+                } else if (q.includes('gracias')) {
+                    reponse = "¡De nada! Estoy aquí para ayudarte siempre que lo necesites.";
+                } else {
+                    reponse = "Lo siento, no entendí bien. ¿En qué te puedo ayudar con las ventas o el inventario?";
+                }
+
+            // 4. WOLOF
+            } else if (q.includes('nanga def') || q.includes('mangi fi') || q.includes('faté') || q.includes('yokk') || q.includes('jaay') || q.includes('xalis') || q.includes('jerejef')) {
+                lang = 'fr-FR';
+                if (q.includes('faté') || q.includes('passe')) {
+                    reponse = "So fatée sa mot de passe walla sa identifiant, woowal Super Admin bi ngir mu fadial la ko.";
+                } else if (q.includes('yokk') || q.includes('stock')) {
+                    reponse = "Ngir yokk produit ci stock bi, bindal tourou marchandise bi ak prix bi ci bloc 'Ajouter / Réapprovisionner un Produit'.";
+                } else if (q.includes('jaay') || q.includes('bind')) {
+                    reponse = "So beggé bind jaay (vente), tanlal produit bi ci bloc 'Enregistrer une Vente', bind quantité bi nga jaay ba noppi nga cliquer 'Valider'.";
+                } else if (q.includes('nanga def') || q.includes('mangi fi')) {
+                    reponse = "Mangi fi rekk jam rekk ! Lu ma la mën a dimbali tay ci gestion quincaillerie bi ?";
+                } else if (q.includes('xalis')) {
+                    reponse = "Xalis bi nga gis (Chiffre d'affaires) dafa lay wan li nga jaay ci wér bi.";
+                } else if (q.includes('jerejef')) {
+                    reponse = "Amul solo ! Mangi fi saa yo beggé dimbal. Jerejef !";
+                } else {
+                    reponse = "Baal ma, degguma li nga wax. So beggé dimbal gu gaw, woowal sa Admin.";
+                }
+
+            // 5. FRANÇAIS
+            } else {
+                lang = 'fr-FR';
+                if (q.includes('mot de passe') || q.includes('passe') || q.includes('connexion') || q.includes('login')) {
+                    reponse = "Si vous avez oublié votre mot de passe, veuillez contacter le Super Administrateur pour le réinitialiser.";
+                } else if (q.includes('stock') || q.includes('produit') || q.includes('ajouter')) {
+                    reponse = "Pour ajouter un produit au stock, remplissez le nom et le prix dans le bloc 'Ajouter / Réapprovisionner un Produit'.";
+                } else if (q.includes('vente') || q.includes('vendre')) {
+                    reponse = "Pour enregistrer une vente, sélectionnez l'article dans 'Enregistrer une Vente', indiquez la quantité puis cliquez sur 'Valider'.";
+                } else if (q.includes('bonjour') || q.includes('salut') || q.includes('coucou')) {
+                    reponse = "Bonjour ! Comment puis-je vous aider aujourd'hui dans la gestion de votre quincaillerie ?";
+                } else if (q.includes('merci') || q.includes('daccord') || q.includes('ok')) {
+                    reponse = "Avec plaisir ! Je reste à votre disposition si vous avez d'autres questions.";
+                } else {
+                    reponse = "Désolé, je n'ai pas bien compris votre demande. Vous pouvez me poser une question en Français, Wolof, Anglais, Arabe ou Espagnol !";
+                }
             }
 
             setTimeout(() => {
-                ajouterMessage(reponse, false);
+                ajouterMessage(reponse, false, lang);
             }, 500);
         }
 
