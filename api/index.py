@@ -138,14 +138,22 @@ def index():
             res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
             users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
 
-            # --- Statistiques visiteurs ---
+            # --- Récupération des visites et statistiques ---
             visiteurs_aujourdhui = 0
             visiteurs_mois = 0
             visiteurs_total = 0
+            derniers_visiteurs = []
+
             try:
-                res_vis = supabase.table('visiteurs').select('created_at').execute()
-                toutes_visites = res_vis.data or []
+                # Récupérer les 50 plus récentes pour le tableau
+                res_vis = supabase.table('visiteurs').select('*').order('id', desc=True).limit(50).execute()
+                derniers_visiteurs = res_vis.data or []
+
+                # Récupérer le total global pour les cartes
+                res_vis_all = supabase.table('visiteurs').select('created_at').execute()
+                toutes_visites = res_vis_all.data or []
                 visiteurs_total = len(toutes_visites)
+
                 for vis in toutes_visites:
                     d_str = str(vis.get('created_at', ''))
                     if d_str.startswith(aujourdhui):
@@ -242,7 +250,8 @@ def index():
                 insights=insights,
                 visiteurs_aujourdhui=visiteurs_aujourdhui,
                 visiteurs_mois=visiteurs_mois,
-                visiteurs_total=visiteurs_total
+                visiteurs_total=visiteurs_total,
+                derniers_visiteurs=derniers_visiteurs
             )
 
         # --- ESPACE GERANT DE QUINCAILLERIE ---
