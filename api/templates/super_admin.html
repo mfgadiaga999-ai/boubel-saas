@@ -513,40 +513,40 @@
             </div>
         </div>
 
-        <!-- JOURNAL DES DERNIÈRES VISITES (STATISTIQUES DE FRÉQUENTATION) -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-list-check me-2"></i> Journal des Dernières Visites (50 plus récentes)</span>
-                <span class="badge bg-info text-dark">{{ visites|length }} entrées</span>
+        <!-- Journal des Dernières Visites -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-3">
+                <h5 class="mb-0 fs-6 fw-bold">
+                    <i class="fa-solid fa-list-check me-2"></i>Journal des Dernières Visites (50 plus récentes)
+                </h5>
+                <span class="badge bg-info text-dark fw-bold">{{ derniers_visiteurs|length }} entrées</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle mb-0">
+                    <table class="table table-hover table-striped align-middle mb-0 text-center">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
                                 <th>Adresse IP</th>
-                                <th>Page Visitée</th>
-                                <th>Langue</th>
-                                <th>Navigateur / User Agent</th>
                                 <th>Date & Heure</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for v in visites %}
-                            <tr>
-                                <td>{{ v.id }}</td>
-                                <td><span class="badge bg-secondary fw-mono">{{ v.adresse_ip }}</span></td>
-                                <td><code class="text-primary">{{ v.page_visitee }}</code></td>
-                                <td><small class="text-muted">{{ v.langue }}</small></td>
-                                <td><small class="text-truncate d-inline-block" style="max-width: 250px;" title="{{ v.user_agent }}">{{ v.user_agent }}</small></td>
-                                <td><small class="text-muted">{{ v.date_visite.strftime('%d/%m/%Y %H:%M:%S') if v.date_visite else 'N/A' }}</small></td>
-                            </tr>
+                            {% if derniers_visiteurs %}
+                                {% for vis in derniers_visiteurs %}
+                                <tr>
+                                    <td><span class="fw-bold text-muted">#{{ vis.id }}</span></td>
+                                    <td><code class="bg-light text-dark px-2 py-1 rounded border">{{ vis.ip_address or 'IP Inconnue' }}</code></td>
+                                    <td><small class="text-muted"><i class="fa-regular fa-clock me-1"></i>{{ vis.created_at }}</small></td>
+                                </tr>
+                                {% endfor %}
                             {% else %}
-                            <tr>
-                                <td colspan="6" class="text-center text-muted p-3">Aucune visite enregistrée pour le moment.</td>
-                            </tr>
-                            {% endfor %}
+                                <tr>
+                                    <td colspan="3" class="py-4 text-muted">
+                                        <i class="fa-solid fa-circle-info me-2"></i>Aucune visite enregistrée pour le moment.
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
