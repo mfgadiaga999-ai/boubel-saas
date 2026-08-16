@@ -1,15 +1,21 @@
 import os
 from collections import Counter
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client, Client
-from datetime import datetime
 
+# 1. Initialisation de l'application Flask
 app = Flask(__name__, template_folder='templates', static_folder='../public/static')
 app.secret_key = os.environ.get('SECRET_KEY', 'boubel_saas_secret_key_2026')
-if __name__ == '__main__':
-    app.run(debug=True)
 
+# 2. Route pour corriger la requête 404 du favicon
+@app.route('/favicon.ico')
+@app.route('/favicon.png')
+def favicon():
+    return '', 204
+
+# 3. Configuration Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "").strip()
 
@@ -24,16 +30,15 @@ def get_supabase_client():
 
 @app.route('/demo')
 def mode_demo():
-    # Données fictives pour la démonstration
     info_quincaillerie = {
         "nom_entreprise": "Quincaillerie Mouhidine (DÉMO)"
     }
     
     produits_demo = [
         {"id": 1, "nom_affichage": "Ciment SOCOCIM 50kg", "prix_unitaire": 4500, "stock_total": 45, "seuil_alerte": 10},
-        {"id": 2, "nom_affichage": "Fer à béton 10mm", "prix_unitaire": 3800, "stock_total": 8, "seuil_alerte": 10}, # Alerte
+        {"id": 2, "nom_affichage": "Fer à béton 10mm", "prix_unitaire": 3800, "stock_total": 8, "seuil_alerte": 10},
         {"id": 3, "nom_affichage": "Peinture BLANCOLOR 20L", "prix_unitaire": 18500, "stock_total": 12, "seuil_alerte": 5},
-        {"id": 4, "nom_affichage": "Pointe 80mm (Kg)", "prix_unitaire": 1000, "stock_total": 3, "seuil_alerte": 5} # Alerte
+        {"id": 4, "nom_affichage": "Pointe 80mm (Kg)", "prix_unitaire": 1000, "stock_total": 3, "seuil_alerte": 5}
     ]
     
     ventes_demo = [
@@ -46,7 +51,6 @@ def mode_demo():
         {"bg": "success", "icon": "fa-chart-line", "badge": "Tendance", "titre": "Meilleure Vente", "message": "Le <b>Ciment SOCOCIM</b> représente 60% de vos ventes aujourd'hui."}
     ]
 
-    # Calcul des KPI fictifs
     ca_demo = sum(v["prix_vente"] * v["quantite_vendue"] for v in ventes_demo)
     valeur_stock = sum(p["prix_unitaire"] * p["stock_total"] for p in produits_demo)
     alertes_count = sum(1 for p in produits_demo if p["stock_total"] <= p["seuil_alerte"])
@@ -95,7 +99,6 @@ def index():
     info_quincaillerie = None
     supabase = get_supabase_client()
 
-    # Définition du mois en cours (Format AAA-MM, ex: '2026-03')
     mois_courant = datetime.now().strftime('%Y-%m')
 
     if session.get('connecte') and supabase:
@@ -126,7 +129,6 @@ def index():
                 qid = v.get('quincaillerie_id')
                 date_v = str(v.get('date_vente', ''))
                 
-                # Vérifier si la vente appartient au mois en cours
                 if date_v.startswith(mois_courant):
                     montant = float(v.get('prix_vente', 0)) * int(v.get('quantite_vendue', 1))
                     ca_total_global_mois += montant
@@ -214,7 +216,6 @@ def index():
                     flash("Votre compte est suspendu. Veuillez contacter l'administrateur.", "danger")
                     return redirect(url_for('index'))
 
-            # Stock de la quincaillerie
             res_stock = supabase.table('stock').select('*').eq('quincaillerie_id', q_id).order('nom').execute()
             valeur_stock_totale = 0.0
             
@@ -234,7 +235,6 @@ def index():
                     'seuil_alerte': seuil
                 })
 
-            # Ventes de la quincaillerie
             res_ventes = supabase.table('ventes').select('*').eq('quincaillerie_id', q_id).order('created_at', desc=True).execute()
             ca_quincaillerie_mois = 0.0
             ventes_du_mois_gerant = []
@@ -244,7 +244,6 @@ def index():
                 px = float(v.get('prix_vente', 0))
                 date_v = str(v.get('date_vente', ''))
 
-                # Si la vente date du mois en cours
                 if date_v.startswith(mois_courant):
                     ca_quincaillerie_mois += (qte * px)
                     ventes_du_mois_gerant.append(v.get('nom_produit'))
@@ -258,7 +257,6 @@ def index():
                     'vendu_par': v.get('vendu_par')
                 })
 
-            # Insights Gérant pour le mois en cours
             gerant_insights = []
 
             if ventes_du_mois_gerant:
@@ -556,4 +554,5 @@ def supprimer_vente(id):
     flash("Vente annulée et stock réajusté.", "info")
     return redirect(url_for('index'))
 
-app = app
+if __name__ == '__main__':
+    app.run(debug=True)
