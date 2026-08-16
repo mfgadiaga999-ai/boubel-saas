@@ -102,13 +102,21 @@ def index():
     mois_courant = datetime.now().strftime('%Y-%m')
     aujourdhui = datetime.now().strftime('%Y-%m-%d')
 
-    # Enregistrement du visiteur dans Supabase (sans bloquer en cas d'erreur)
-    if supabase:
+    # --- ENREGISTREMENT DU VISITEUR ---
+    # 1. On ne compte PAS si c'est un super_admin
+    # 2. On ne compte PAS si la session a déjà marqué "visite_enregistree" (évite le refresh F5)
+    est_super_admin = (session.get('role') == 'super_admin')
+    deja_visite = session.get('visite_enregistree', False)
+
+    if supabase and not est_super_admin and not deja_visite:
         try:
             ip_client = request.headers.get('X-Forwarded-For', request.remote_addr)
             if ip_client and ',' in ip_client:
                 ip_client = ip_client.split(',')[0].strip()
+                
             supabase.table('visiteurs').insert({'ip_address': ip_client}).execute()
+            # Marquer dans la session que ce navigateur a déjà été compté
+            session['visite_enregistree'] = True
         except Exception as e:
             print(f"Erreur enregistrement visiteur: {e}")
 
@@ -130,7 +138,7 @@ def index():
             res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
             users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
 
-            # --- Récupération des statistiques visiteurs depuis Supabase ---
+            # --- Statistiques visiteurs ---
             visiteurs_aujourdhui = 0
             visiteurs_mois = 0
             visiteurs_total = 0
