@@ -100,6 +100,17 @@ def index():
     supabase = get_supabase_client()
 
     mois_courant = datetime.now().strftime('%Y-%m')
+    aujourdhui = datetime.now().strftime('%Y-%m-%d')
+
+    # Enregistrement du visiteur dans Supabase (sans bloquer en cas d'erreur)
+    if supabase:
+        try:
+            ip_client = request.headers.get('X-Forwarded-For', request.remote_addr)
+            if ip_client and ',' in ip_client:
+                ip_client = ip_client.split(',')[0].strip()
+            supabase.table('visiteurs').insert({'ip_address': ip_client}).execute()
+        except Exception as e:
+            print(f"Erreur enregistrement visiteur: {e}")
 
     if session.get('connecte') and supabase:
         role = session.get('role')
@@ -118,6 +129,23 @@ def index():
 
             res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
             users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
+
+            # --- Récupération des statistiques visiteurs depuis Supabase ---
+            visiteurs_aujourdhui = 0
+            visiteurs_mois = 0
+            visiteurs_total = 0
+            try:
+                res_vis = supabase.table('visiteurs').select('created_at').execute()
+                toutes_visites = res_vis.data or []
+                visiteurs_total = len(toutes_visites)
+                for vis in toutes_visites:
+                    d_str = str(vis.get('created_at', ''))
+                    if d_str.startswith(aujourdhui):
+                        visiteurs_aujourdhui += 1
+                    if d_str.startswith(mois_courant):
+                        visiteurs_mois += 1
+            except Exception as e:
+                print(f"Erreur lecture visiteurs: {e}")
 
             ca_total_global_mois = 0.0
             total_ventes_count_mois = 0
@@ -203,7 +231,10 @@ def index():
                 ca_total_global=ca_total_global_mois,
                 total_ventes_count=total_ventes_count_mois,
                 total_articles_stock=total_articles_stock,
-                insights=insights
+                insights=insights,
+                visiteurs_aujourdhui=visiteurs_aujourdhui,
+                visiteurs_mois=visiteurs_mois,
+                visiteurs_total=visiteurs_total
             )
 
         # --- ESPACE GERANT DE QUINCAILLERIE ---
