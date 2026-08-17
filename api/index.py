@@ -558,50 +558,58 @@ def ajouter_vente():
     mode_paiement = request.form.get('mode_paiement', 'Espèces')
     panier_json = request.form.get('panier_json')
 
-    # Si le panier JSON est fourni (gestion multi-produits)
-    if panier_json:
-        try:
-            panier = json.loads(panier_json)
-        except Exception:
-            flash("Format de panier invalide.", "danger")
-            return redirect(url_for('index'))
+    if not panier_json:
+        flash("Erreur : Aucun panier reçu.", "danger")
+        return redirect(url_for('index'))
 
+    try:
+        panier = json.loads(panier_json)
         if not panier:
             flash("Le panier est vide.", "danger")
             return redirect(url_for('index'))
 
-        # Traitement de chaque article du panier
+        # Traitement pour chaque article du panier avec Supabase
         for item in panier:
             nom_produit = item.get('nom')
             quantite = int(item.get('qte', 0))
+            prix_unitaire = float(item.get('prix', 0))
 
-            # Rechercher le produit en BDD
-            produit = Produit.query.filter_by(nom_affichage=nom_produit).first() # Adaptez selon votre ORM/SQL
+            # 1. Vérifier l'existence et le stock de l'article dans Supabase
+            response = supabase.table('produits').select('*').eq('nom_affichage', nom_produit).execute()
+            
+            if not response.data:
+                flash(f"Article inexistant : {nom_produit}", "danger")
+                return redirect(url_for('index'))
+            
+            produit = response.data[0]
+            nouveau_stock = produit['stock_total'] - quantite
 
-            if not produit or produit.stock_total < quantite:
+            if nouveau_stock < 0:
                 flash(f"Stock insuffisant pour {nom_produit}.", "danger")
                 return redirect(url_for('index'))
 
-            # Décrémenter le stock et enregistrer la vente
-            produit.stock_total -= quantite
-            
-            nouvelle_vente = Vente(
-                nom_produit=nom_produit,
-                quantite_vendue=quantite,
-                prix_vente=item.get('prix', produit.prix_unitaire),
-                nom_client=nom_client,
-                mode_paiement=mode_paiement,
-                vendu_par=session.get('nom_utilisateur', 'Gérant')
-            )
-            db.session.add(nouvelle_vente)
+            # 2. Mettre à jour le stock dans Supabase
+            supabase.table('produits').update({'stock_total': nouveau_stock}).eq('id', produit['id']).execute()
 
-        db.session.commit()
+            # 3. Enregistrer la vente dans la table des ventes
+            nouvelle_vente = {
+                'nom_produit': nom_produit,
+                'quantite_vendue': quantite,
+                'prix_vente': prix_unitaire,
+                'nom_client': nom_client,
+                'mode_paiement': mode_paiement,
+                'vendu_par': session.get('nom_utilisateur', 'Gérant')
+            }
+            supabase.table('ventes').insert(nouvelle_vente).execute()
+
         flash("Vente enregistrée avec succès !", "success")
         return redirect(url_for('index'))
 
-    # Fallback si envoi simple sans panier JSON
-    flash("Stock insuffisant ou article inexistant.", "danger")
-    return redirect(url_for('index'))
+    except Exception as e:
+        # L'affichage du print permettra de lire l'erreur exacte dans les logs Vercel
+        print(f"Erreur 500 détaillée : {str(e)}") 
+        flash("Erreur interne lors de l'enregistrement de la vente.", "danger")
+        return redirect(url_for('index'))
 
 @app.route('/supprimer-vente/<int:id>')
 def supprimer_vente(id):
