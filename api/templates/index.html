@@ -297,66 +297,58 @@
             }
         }
 
-        /* Correctif pour l'impression sur 1 seule page */
         @media print {
+            /* 1. Masquer tout le contenu de la page / Dashboard */
             body * {
                 visibility: hidden !important;
-            }
-            #section-impression-facture, #section-impression-facture * {
-                visibility: visible !important;
-            }
-            #section-impression-facture {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                page-break-inside: avoid !important;
-            }
-            .modal-footer, .btn-close, .no-print {
-                display: none !important;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 10mm;
-            }
-        }
-
-        /* Style spécial pour l'impression / sauvegarde en PDF */
-        @media print {
-            /* 1. Masquer tout le tableau de bord et l'arrière-plan */
-            body * {
-                visibility: hidden !important;
+                height: 0 !important;
             }
 
-            /* 2. Afficher uniquement la modale de facture */
+            /* 2. Afficher la modale et son contenu uniquement */
             #modalFacture, #modalFacture * {
                 visibility: visible !important;
+                height: auto !important;
             }
 
-            /* 3. Ajuster la facture pour qu'elle prenne toute la page sans débordaement */
-            #modalFacture {
+            /* 3. Neutraliser le positionnement de la modale Bootstrap pour l'impression */
+            .modal {
                 position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
                 width: 100% !important;
-                max-width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                overflow: visible !important;
+            }
+
+            .modal-dialog {
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .modal-content {
                 border: none !important;
                 box-shadow: none !important;
             }
 
-            /* 4. Masquer les boutons "Fermer", "Imprimer" et la croix lors de l'impression */
-            .modal-footer, .btn, .btn-close, button {
+            /* 4. Masquer l'arrière-plan sombre Bootstrap et les boutons (Fermer/Imprimer) */
+            .modal-backdrop, .modal-footer, .btn, .btn-close {
                 display: none !important;
             }
 
-            /* 5. Forcer le format A4 compact */
+            /* 5. Empêcher la création de pages supplémentaires */
+            html, body {
+                height: 100% !important;
+                overflow: hidden !important;
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+            }
+
             @page {
                 size: A4 portrait;
-                margin: 8mm;
+                margin: 10mm;
             }
         }
     </style>
@@ -538,7 +530,7 @@
                                 <div class="row g-2 mb-2">
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold" data-i18n="lbl_nom_client">Nom du Client</label>
-                                        <input type="text" id="vente-nom-client" class="form-control" placeholder="ex: Moussa Diallo (Vide = Client Comptant)">
+                                        <input type="text" id="nom_client_input" name="nom_client" class="form-control" placeholder="ex: Moussa Diallo (Vide = Client Comptant)">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold" data-i18n="lbl_mode_paiement">Mode de Paiement</label>
@@ -1433,23 +1425,31 @@
             }
         }
 
-        function afficherFacture(numero, date, client, items, paiement) {
+            function afficherFacture(numero, date, client, items, paiement) {
+            // 1. Mettre à jour le numéro et la date
             document.getElementById('fac-num').innerText = numero;
             document.getElementById('fac-date').innerText = 'Date: ' + date;
-            
-            // Corrige l'affichage dynamique du nom client
-            const nomClientAffiche = (client && client.trim() !== "") ? client : "Client Comptant";
+
+            // 2. Traiter et affichager dynamiquement le nom du client
+            // Si 'client' est vide, indéfini ou contient seulement des espaces, on met "Client Comptant"
+            const nomClientAffiche = (client && client.trim() !== "") ? client.trim() : "Client Comptant";
             document.getElementById('fac-client').innerText = nomClientAffiche;
+
+            // 3. Mettre à jour le mode de paiement
             document.getElementById('fac-mode').innerText = paiement;
 
+            // 4. Remplir le tableau des articles
             const tbody = document.getElementById('fac-table-items');
             tbody.innerHTML = "";
             let totalGeneral = 0;
+
+            // Formateur de prix en FCFA
             const formatPrix = (val) => new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
 
             items.forEach(item => {
                 const totalLigne = item.qte * item.prix;
                 totalGeneral += totalLigne;
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="fw-bold">${item.nom}</td>
@@ -1460,8 +1460,10 @@
                 `;
             });
 
+            // 5. Afficher le total général
             document.getElementById('fac-grand-total').innerText = formatPrix(totalGeneral);
 
+            // 6. Ouvrir la modale Bootstrap
             const modalElement = new bootstrap.Modal(document.getElementById('modalFacture'));
             modalElement.show();
         }
