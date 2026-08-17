@@ -549,9 +549,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 
 @app.route('/ajouter-vente', methods=['POST'])
 def ajouter_vente():
-    # 1. Récupération de l'instance Supabase via votre fonction
     supabase = get_supabase_client()
-
     panier_json = request.form.get('panier_json')
 
     if not panier_json:
@@ -573,8 +571,8 @@ def ajouter_vente():
             quantite_vendue = int(item.get('qte', 0))
             prix_unitaire = float(item.get('prix', 0))
 
-            # Recherche dans la table 'action'
-            response = supabase.table('action') \
+            # 1. Recherche dans la table 'stock' (et non 'action')
+            response = supabase.table('stock') \
                 .select('*') \
                 .eq('nom', nom_produit) \
                 .eq('quincaillerie_id', quincaillerie_id) \
@@ -591,13 +589,13 @@ def ajouter_vente():
                 flash(f"Stock insuffisant pour {nom_produit}.", "danger")
                 return redirect(url_for('index'))
 
-            # Mise à jour de la table 'action'
-            supabase.table('action') \
+            # 2. Mise à jour de la quantité dans la table 'stock'
+            supabase.table('stock') \
                 .update({'quantite': nouveau_stock}) \
                 .eq('identifiant', produit['identifiant']) \
                 .execute()
 
-            # Insertion dans la table 'ventes'
+            # 3. Insertion de la vente dans la table 'ventes'
             nouvelle_vente = {
                 'quincaillerie_id': quincaillerie_id,
                 'nom_produit': nom_produit,
