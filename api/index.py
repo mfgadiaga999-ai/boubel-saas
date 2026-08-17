@@ -17,8 +17,8 @@ def favicon():
     return '', 204
 
 # 3. Configuration Supabase
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "").strip()
+SUPABASE_URL = os.environ.get("https://ogihumifxluovsrzlgve.supabase.co", "").strip()
+SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9naWh1bWlmeGx1b3ZzcnpsZ3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDk2NTQsImV4cCI6MjEwMjIyNTY1NH0.g64nxtVh5EhlO3LlOUO1aEIRkFGJglaDeBXQLikCR5o", "").strip()
 
 def get_supabase_client():
     if SUPABASE_URL and SUPABASE_KEY:
