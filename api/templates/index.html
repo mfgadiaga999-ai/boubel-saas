@@ -97,6 +97,17 @@
             color: #cbd5e1 !important;
         }
 
+        /* Modale en mode sombre */
+        body.dark-mode .modal-content {
+            background-color: #172033 !important;
+            color: #ffffff !important;
+            border-color: #27354f !important;
+        }
+        body.dark-mode .modal-header,
+        body.dark-mode .modal-footer {
+            border-color: #27354f !important;
+        }
+
         /* =========================================================
         ADAPTATION RESPONSIVE (MOBILE, TABLETTE, DESKTOP)
         ========================================================= */
@@ -140,18 +151,6 @@
         .table-responsive table {
             width: 100% !important;
             white-space: nowrap !important;
-        }
-
-        @media (max-width: 576px) {
-            .table th, .table td {
-                padding: 0.5rem 0.6rem !important;
-                font-size: 0.8rem !important;
-            }
-            
-            .table .btn-sm {
-                padding: 0.2rem 0.4rem !important;
-                font-size: 0.75rem !important;
-            }
         }
 
         @media (max-width: 768px) {
@@ -295,6 +294,25 @@
         @media (min-width: 769px) and (max-width: 991px) {
             #chatbot-window {
                 width: 320px !important;
+            }
+        }
+
+        /* Style pour l'impression de la facture */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #section-impression-facture, #section-impression-facture * {
+                visibility: visible;
+            }
+            #section-impression-facture {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .modal-footer, .btn-close {
+                display: none !important;
             }
         }
     </style>
@@ -469,11 +487,11 @@
                     </div>
                 </div>
 
-                <!-- ENREGISTRER UNE VENTE -->
+                <!-- ENREGISTRER UNE VENTE (Inclus sélection Client & Mode de paiement pour les factures) -->
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-success text-white fw-bold">
-                            <i class="fa-solid fa-cart-shopping me-1"></i> <span data-i18n="enregistrer_vente_titre">Enregistrer une Vente</span>
+                            <i class="fa-solid fa-cart-shopping me-1"></i> <span data-i18n="enregistrer_vente_titre">Enregistrer une Vente & Générer Facture</span>
                         </div>
                         <div class="card-body">
                             <form action="/ajouter-vente" method="POST" onsubmit="enregistrerVente(event)">
@@ -493,9 +511,23 @@
                                         <label class="form-label small fw-bold" data-i18n="lbl_quantite_vendue">Quantité Vendue</label>
                                         <input type="number" name="quantite" min="1" value="1" class="form-control form-control-sm" required>
                                     </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label small fw-bold" data-i18n="lbl_nom_client">Nom du Client (Optionnel)</label>
+                                        <input type="text" name="nom_client" class="form-control form-control-sm" placeholder="ex: Client Comptant / Moussa Diallo">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label small fw-bold" data-i18n="lbl_mode_paiement">Mode de Paiement</label>
+                                        <select name="mode_paiement" class="form-select form-select-sm">
+                                            <option value="Espèces" data-i18n="opt_especes">Espèces</option>
+                                            <option value="Wave">Wave</option>
+                                            <option value="Orange Money">Orange Money</option>
+                                            <option value="Chèque" data-i18n="opt_cheque">Chèque</option>
+                                            <option value="Virement" data-i18n="opt_virement">Virement BTP</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold mt-2">
-                                    <i class="fa-solid fa-check me-1"></i> <span data-i18n="btn_valider_vente">Valider la Vente</span>
+                                    <i class="fa-solid fa-file-invoice-dollar me-1"></i> <span data-i18n="btn_valider_vente">Valider & Editer la Facture</span>
                                 </button>
                             </form>
                         </div>
@@ -515,6 +547,12 @@
                         <li class="nav-item">
                             <button class="nav-link fw-bold" id="ventes-tab" data-bs-toggle="tab" data-bs-target="#ventes" type="button">
                                 <i class="fa-solid fa-list-check me-1"></i> <span data-i18n="onglets_ventes">Historique des Ventes</span> ({{ ventes|length if ventes is defined else 0 }})
+                            </button>
+                        </li>
+                        <!-- MODIFICATION : AJOUT DE L'ONGLET FACTURES -->
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold" id="factures-tab" data-bs-toggle="tab" data-bs-target="#factures" type="button">
+                                <i class="fa-solid fa-receipt me-1"></i> <span data-i18n="onglets_factures">Factures & Reçus</span> ({{ (factures|length if factures is defined else (ventes|length if ventes is defined else 0)) }})
                             </button>
                         </li>
                     </ul>
@@ -588,6 +626,10 @@
                                                 <td class="fw-bold text-success" data-label="Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Vendu par"><span class="badge bg-light text-dark border">{{ v.vendu_par }}</span></td>
                                                 <td class="text-center" data-label="Action">
+                                                    <!-- MODIFICATION : BOUTON IMPRIMER FACTURE -->
+                                                    <button class="btn btn-outline-primary btn-sm me-1" onclick="afficherFacture('FAC-{{ v.id }}', '{{ v.date_vente }}', '{{ v.nom_client if v.nom_client else 'Client Comptant' }}', '{{ v.nom_produit }}', {{ v.quantite_vendue }}, {{ v.prix_vente or 0 }}, '{{ v.mode_paiement if v.mode_paiement else 'Espèces' }}')">
+                                                        <i class="fa-solid fa-print"></i>
+                                                    </button>
                                                     <a href="/supprimer-vente/{{ v.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette vente ? Le stock sera restitué.')"><i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_annuler">Annuler</span></a>
                                                 </td>
                                             </tr>
@@ -600,10 +642,136 @@
                             </div>
                         </div>
 
+                        <!-- MODIFICATION : NOUVEL ONGLET DES FACTURES -->
+                        <div class="tab-pane fade" id="factures" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-adaptive align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th data-i18n="th_numero_facture">N° Facture</th>
+                                            <th data-i18n="th_date">Date</th>
+                                            <th data-i18n="th_nom_client">Client</th>
+                                            <th data-i18n="th_produit">Désignation</th>
+                                            <th data-i18n="th_total">Montant Total</th>
+                                            <th data-i18n="th_mode_paiement">Paiement</th>
+                                            <th class="text-center" data-i18n="th_action">Actions Facture</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if factures %}
+                                            {% for f in factures %}
+                                            <tr>
+                                                <td class="fw-bold text-primary" data-label="N° Facture">{{ f.numero_facture or ('FAC-' ~ f.id) }}</td>
+                                                <td class="small" data-label="Date">{{ f.date_vente or f.date_facture }}</td>
+                                                <td data-label="Client"><b>{{ f.nom_client if f.nom_client else 'Client Comptant' }}</b></td>
+                                                <td data-label="Désignation">{{ f.nom_produit }} (x{{ f.quantite_vendue }})</td>
+                                                <td class="fw-bold text-success" data-label="Montant Total">{{ "{:,.0f}".format((f.prix_vente or 0) * (f.quantite_vendue or 0)) }} FCFA</td>
+                                                <td data-label="Paiement"><span class="badge bg-info text-dark"><i class="fa-solid fa-credit-card me-1"></i> {{ f.mode_paiement if f.mode_paiement else 'Espèces' }}</span></td>
+                                                <td class="text-center" data-label="Actions Facture">
+                                                    <button class="btn btn-sm btn-primary fw-bold" onclick="afficherFacture('{{ f.numero_facture or ('FAC-' ~ f.id) }}', '{{ f.date_vente or f.date_facture }}', '{{ f.nom_client if f.nom_client else 'Client Comptant' }}', '{{ f.nom_produit }}', {{ f.quantite_vendue }}, {{ f.prix_vente or 0 }}, '{{ f.mode_paiement if f.mode_paiement else 'Espèces' }}')">
+                                                        <i class="fa-solid fa-eye me-1"></i> <span data-i18n="btn_voir_facture">Voir / Imprimer</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% elif ventes %}
+                                            {% for v in ventes %}
+                                            <tr>
+                                                <td class="fw-bold text-primary" data-label="N° Facture">FAC-{{ v.id }}</td>
+                                                <td class="small" data-label="Date">{{ v.date_vente }}</td>
+                                                <td data-label="Client"><b>{{ v.nom_client if v.nom_client else 'Client Comptant' }}</b></td>
+                                                <td data-label="Désignation">{{ v.nom_produit }} (x{{ v.quantite_vendue }})</td>
+                                                <td class="fw-bold text-success" data-label="Montant Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
+                                                <td data-label="Paiement"><span class="badge bg-info text-dark"><i class="fa-solid fa-wallet me-1"></i> {{ v.mode_paiement if v.mode_paiement else 'Espèces' }}</span></td>
+                                                <td class="text-center" data-label="Actions Facture">
+                                                    <button class="btn btn-sm btn-primary fw-bold" onclick="afficherFacture('FAC-{{ v.id }}', '{{ v.date_vente }}', '{{ v.nom_client if v.nom_client else 'Client Comptant' }}', '{{ v.nom_produit }}', {{ v.quantite_vendue }}, {{ v.prix_vente or 0 }}, '{{ v.mode_paiement if v.mode_paiement else 'Espèces' }}')">
+                                                        <i class="fa-solid fa-print me-1"></i> <span data-i18n="btn_imprimer">Imprimer Reçu</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td colspan="7" class="text-center text-muted py-3" data-i18n="aucune_facture">Aucune facture enregistrée pour le moment.</td></tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- MODIFICATION : MODAL DE VISUALISATION ET IMPRESSION DE FACTURE -->
+    <div class="modal fade" id="modalFacture" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-invoice me-2"></i> Facture Client</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="section-impression-facture">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                        <div>
+                            <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-store me-2"></i> {{ info_quincaillerie.nom_entreprise if info_quincaillerie else 'Ma Quincaillerie' }}</h4>
+                            <p class="small text-muted mb-0">Quincaillerie générale, matériaux de construction & outillage</p>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="fw-bold text-dark mb-0" id="fac-num">FAC-0000</h5>
+                            <span class="small text-muted" id="fac-date">Date: --/--/----</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <p class="mb-1 text-muted small fw-bold">CLIENT :</p>
+                            <h6 class="fw-bold text-dark" id="fac-client">Client Comptant</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <p class="mb-1 text-muted small fw-bold">MODE DE PAIEMENT :</p>
+                            <span class="badge bg-success" id="fac-mode">Espèces</span>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Désignation de l'Article</th>
+                                <th class="text-center">Quantité</th>
+                                <th class="text-end">Prix Unitaire</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="fac-article" class="fw-bold">Article Exemple</td>
+                                <td id="fac-qte" class="text-center">1</td>
+                                <td id="fac-pu" class="text-end">0 FCFA</td>
+                                <td id="fac-tot" class="text-end fw-bold text-success">0 FCFA</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">MONTANT TOTAL PAYÉ :</th>
+                                <th class="text-end text-primary fs-5" id="fac-grand-total">0 FCFA</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="text-center mt-4 pt-3 border-top text-muted small">
+                        <p class="mb-0">Merci de votre confiance et à bientôt dans notre quincaillerie !</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-success btn-sm fw-bold" onclick="window.print()">
+                        <i class="fa-solid fa-print me-1"></i> Imprimer Facture
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -736,13 +904,19 @@
                 lbl_quantite_ajoutee: "Quantité Ajoutée",
                 lbl_seuil_alerte: "Seuil d'Alerte Stock",
                 btn_ajouter: "Enregistrer en Stock",
-                enregistrer_vente_titre: "Enregistrer une Vente",
+                enregistrer_vente_titre: "Enregistrer une Vente & Générer Facture",
                 lbl_selectionner_article: "Sélectionner l'Article",
                 opt_choisir_produit: "-- Choisir un produit --",
                 lbl_quantite_vendue: "Quantité Vendue",
-                btn_valider_vente: "Valider la Vente",
+                lbl_nom_client: "Nom du Client (Optionnel)",
+                lbl_mode_paiement: "Mode de Paiement",
+                opt_especes: "Espèces",
+                opt_cheque: "Chèque",
+                opt_virement: "Virement BTP",
+                btn_valider_vente: "Valider & Editer la Facture",
                 onglets_stock: "État du Stock",
                 onglets_ventes: "Historique des Ventes",
+                onglets_factures: "Factures & Reçus",
                 th_nom_produit: "Nom Produit",
                 th_prix_unitaire: "Prix Unitaire",
                 th_stock_restant: "Stock Restant",
@@ -760,6 +934,12 @@
                 th_action: "Action",
                 btn_annuler: "Annuler",
                 aucune_vente: "Aucune vente enregistrée.",
+                th_numero_facture: "N° Facture",
+                th_nom_client: "Client",
+                th_mode_paiement: "Paiement",
+                btn_voir_facture: "Voir / Imprimer",
+                btn_imprimer: "Imprimer Reçu",
+                aucune_facture: "Aucune facture enregistrée pour le moment.",
                 connexion_titre: "Connexion SaaS",
                 connexion_sous_titre: "Espace Quincaillerie & Administration",
                 identifiant: "Identifiant",
@@ -790,13 +970,19 @@
                 lbl_quantite_ajoutee: "Lim bi nga yokk",
                 lbl_seuil_alerte: "Yaamou Artou",
                 btn_ajouter: "Dënk ci Stock bi",
-                enregistrer_vente_titre: "Bind Jaay (Vente)",
+                enregistrer_vente_titre: "Bind Jaay ak Genne Facture",
                 lbl_selectionner_article: "Tanlal Marchandise bi",
                 opt_choisir_produit: "-- Tanlal produit --",
                 lbl_quantite_vendue: "Lim bi nga jaay",
-                btn_valider_vente: "Daccordal Jaay bi",
+                lbl_nom_client: "Tourou Client bi",
+                lbl_mode_paiement: "Naka la fayee",
+                opt_especes: "Xalis woyof (Espèces)",
+                opt_cheque: "Chèque",
+                opt_virement: "Virement",
+                btn_valider_vente: "Daccordal Jaay bi ak Facture bi",
                 onglets_stock: "Lifi nekk ci Stock",
                 onglets_ventes: "Linga jaay yëpp",
+                onglets_factures: "Facture ak Reçu yi",
                 th_nom_produit: "Tourou Produit",
                 th_prix_unitaire: "Prix bi",
                 th_stock_restant: "Lifi des",
@@ -814,6 +1000,12 @@
                 th_action: "Jëf",
                 btn_annuler: "Annuler",
                 aucune_vente: "Amul benn vente.",
+                th_numero_facture: "N° Facture",
+                th_nom_client: "Client bi",
+                th_mode_paiement: "Paiement",
+                btn_voir_facture: "Xool / Imprimer",
+                btn_imprimer: "Imprimer Reçu",
+                aucune_facture: "Amul benn facture ci jamono ji.",
                 connexion_titre: "Connexion SaaS",
                 connexion_sous_titre: "Espace Quincaillerie",
                 identifiant: "Identifiant",
@@ -844,13 +1036,19 @@
                 lbl_quantite_ajoutee: "Added Quantity",
                 lbl_seuil_alerte: "Stock Alert Threshold",
                 btn_ajouter: "Save to Stock",
-                enregistrer_vente_titre: "Record a Sale",
+                enregistrer_vente_titre: "Record a Sale & Generate Invoice",
                 lbl_selectionner_article: "Select Item",
                 opt_choisir_produit: "-- Choose a product --",
                 lbl_quantite_vendue: "Sold Quantity",
-                btn_valider_vente: "Confirm Sale",
+                lbl_nom_client: "Customer Name (Optional)",
+                lbl_mode_paiement: "Payment Method",
+                opt_especes: "Cash",
+                opt_cheque: "Check",
+                opt_virement: "Bank Transfer",
+                btn_valider_vente: "Confirm & Edit Invoice",
                 onglets_stock: "Stock Inventory",
                 onglets_ventes: "Sales History",
+                onglets_factures: "Invoices & Receipts",
                 th_nom_produit: "Product Name",
                 th_prix_unitaire: "Unit Price",
                 th_stock_restant: "Remaining Stock",
@@ -868,6 +1066,12 @@
                 th_action: "Action",
                 btn_annuler: "Cancel",
                 aucune_vente: "No sales recorded.",
+                th_numero_facture: "Invoice N°",
+                th_nom_client: "Customer",
+                th_mode_paiement: "Payment",
+                btn_voir_facture: "View / Print",
+                btn_imprimer: "Print Receipt",
+                aucune_facture: "No invoices recorded yet.",
                 connexion_titre: "SaaS Login",
                 connexion_sous_titre: "Hardware & Admin Space",
                 identifiant: "Username",
@@ -898,13 +1102,19 @@
                 lbl_quantite_ajoutee: "الكمية المضافة",
                 lbl_seuil_alerte: "حد تنبيه المخزون",
                 btn_ajouter: "حفظ في المخزون",
-                enregistrer_vente_titre: "تسجيل عملية بيع",
+                enregistrer_vente_titre: "تسجيل عملية بيع وإصدار فاتورة",
                 lbl_selectionner_article: "اختر المنتج",
                 opt_choisir_produit: "-- اختر منتجاً --",
                 lbl_quantite_vendue: "الكمية المباعة",
-                btn_valider_vente: "تأكيد البيع",
+                lbl_nom_client: "اسم العميل (اختياري)",
+                lbl_mode_paiement: "طريقة الدفع",
+                opt_especes: "نقداً",
+                opt_cheque: "شيك",
+                opt_virement: "تحويل بنكي",
+                btn_valider_vente: "تأكيد وإصدار الفاتورة",
                 onglets_stock: "حالة المخزون",
                 onglets_ventes: "سجل المبيعات",
+                onglets_factures: "الفواتير والإيصالات",
                 th_nom_produit: "اسم المنتج",
                 th_prix_unitaire: "سعر الوحدة",
                 th_stock_restant: "المخزون المتبقي",
@@ -922,6 +1132,12 @@
                 th_action: "إجراء",
                 btn_annuler: "إلغاء",
                 aucune_vente: "لا يوجد مبيعات مسجلة.",
+                th_numero_facture: "رقم الفاتورة",
+                th_nom_client: "العميل",
+                th_mode_paiement: "الدفع",
+                btn_voir_facture: "عرض / طباعة",
+                btn_imprimer: "طباعة الإيصال",
+                aucune_facture: "لا توجد فواتير مسجلة حتى الآن.",
                 connexion_titre: "تسجيل الدخول",
                 connexion_sous_titre: "منصة إدارة الخردوات",
                 identifiant: "اسم المستخدم",
@@ -952,13 +1168,19 @@
                 lbl_quantite_ajoutee: "Cantidad Añadida",
                 lbl_seuil_alerte: "Umbral de Alerta",
                 btn_ajouter: "Guardar en Inventario",
-                enregistrer_vente_titre: "Registrar una Venta",
+                enregistrer_vente_titre: "Registrar una Venta y Factura",
                 lbl_selectionner_article: "Seleccionar Artículo",
                 opt_choisir_produit: "-- Elegir un producto --",
                 lbl_quantite_vendue: "Cantidad Vendida",
-                btn_valider_vente: "Confirmar Venta",
+                lbl_nom_client: "Nombre del Cliente (Opcional)",
+                lbl_mode_paiement: "Método de Pago",
+                opt_especes: "Efectivo",
+                opt_cheque: "Cheque",
+                opt_virement: "Transferencia",
+                btn_valider_vente: "Confirmar y Facturar",
                 onglets_stock: "Estado del Inventario",
                 onglets_ventes: "Historial de Ventas",
+                onglets_factures: "Facturas y Recibos",
                 th_nom_produit: "Nombre del Producto",
                 th_prix_unitaire: "Precio Unitario",
                 th_stock_restant: "Stock Restante",
@@ -976,6 +1198,12 @@
                 th_action: "Acción",
                 btn_annuler: "Cancelar",
                 aucune_vente: "No hay ventas registradas.",
+                th_numero_facture: "N° Factura",
+                th_nom_client: "Cliente",
+                th_mode_paiement: "Pago",
+                btn_voir_facture: "Ver / Imprimir",
+                btn_imprimer: "Imprimir Recibo",
+                aucune_facture: "No hay facturas registradas por el momento.",
                 connexion_titre: "Iniciar Sesión",
                 connexion_sous_titre: "Espacio de Ferretería y Admin",
                 identifiant: "Usuario",
@@ -1051,6 +1279,26 @@
             }
         }
 
+        // MODIFICATION : Fonction pour charger et afficher dynamiquement une facture dans la modale
+        function afficherFacture(numero, date, client, article, qte, prixUnit, paiement) {
+            document.getElementById('fac-num').innerText = numero;
+            document.getElementById('fac-date').innerText = 'Date: ' + date;
+            document.getElementById('fac-client').innerText = client;
+            document.getElementById('fac-mode').innerText = paiement;
+            document.getElementById('fac-article').innerText = article;
+            document.getElementById('fac-qte').innerText = qte;
+            
+            const total = qte * prixUnit;
+            const formatPrix = (val) => new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
+            
+            document.getElementById('fac-pu').innerText = formatPrix(prixUnit);
+            document.getElementById('fac-tot').innerText = formatPrix(total);
+            document.getElementById('fac-grand-total').innerText = formatPrix(total);
+
+            const modalElement = new bootstrap.Modal(document.getElementById('modalFacture'));
+            modalElement.show();
+        }
+
         // Fonction pour lire le texte à voix haute (Synthèse vocale multilingue)
         function parlerTexte(texte, lang = 'fr-FR') {
             if ('speechSynthesis' in window) {
@@ -1120,31 +1368,31 @@
             let lang = 'fr-FR';
 
             // 1. ANGLAIS
-            if (q.includes('hello') || q.includes('hi') || q.includes('how are you') || q.includes('help') || q.includes('password') || q.includes('stock') || q.includes('sell') || q.includes('sale') || q.includes('thanks') || q.includes('thank you')) {
+            if (q.includes('hello') || q.includes('hi') || q.includes('how are you') || q.includes('help') || q.includes('password') || q.includes('stock') || q.includes('sell') || q.includes('sale') || q.includes('invoice') || q.includes('thanks') || q.includes('thank you')) {
                 lang = 'en-US';
                 if (q.includes('password') || q.includes('login') || q.includes('forgot')) {
                     reponse = "If you forgot your password or username, please contact the Super Admin to reset it.";
                 } else if (q.includes('stock') || q.includes('product') || q.includes('add')) {
                     reponse = "To add a new product or restock, fill in the product name and price in the 'Add / Restock Product' block.";
-                } else if (q.includes('sell') || q.includes('sale')) {
-                    reponse = "To record a sale, select the item in the 'Record a Sale' section, enter the quantity, and click 'Validate'.";
+                } else if (q.includes('sell') || q.includes('sale') || q.includes('invoice')) {
+                    reponse = "To record a sale and issue an invoice, select the item, enter customer details and click 'Validate & Edit Invoice'.";
                 } else if (q.includes('hello') || q.includes('hi') || q.includes('how are you')) {
                     reponse = "Hello! I am your assistant. How can I help you manage your hardware store today?";
                 } else if (q.includes('thanks') || q.includes('thank you')) {
                     reponse = "You're welcome! I am here whenever you need help.";
                 } else {
-                    reponse = "I didn't quite catch that. How can I assist you with your inventory or sales?";
+                    reponse = "I didn't quite catch that. How can I assist you with your inventory, sales or invoices?";
                 }
 
             // 2. ARABE
-            } else if (q.includes('مرحبا') || q.includes('سلام') || q.includes('كيف') || q.includes('كلمة السر') || q.includes('مخزون') || q.includes('بيع') || q.includes('شكرا')) {
+            } else if (q.includes('مرحبا') || q.includes('سلام') || q.includes('كيف') || q.includes('كلمة السر') || q.includes('مخزون') || q.includes('بيع') || q.includes('فاتورة') || q.includes('شكرا')) {
                 lang = 'ar-SA';
                 if (q.includes('كلمة السر') || q.includes('دخول')) {
                     reponse = "إذا نسيت كلمة المرور أو اسم المستخدم، يرجى الاتصال بالمسؤول لإعادة ضبطها.";
                 } else if (q.includes('مخزون') || q.includes('منتج') || q.includes('إضافة')) {
                     reponse = "لإضافة منتج جديد، أدخل اسم المنتج والسعر في قسم 'إضافة / إعادة تزويد المنتج'.";
-                } else if (q.includes('بيع')) {
-                    reponse = "لتسجيل عملية بيع، اختر المنتج من قسم 'تسجيل البيع'، أدخل الكمية ثم انقر على 'تأكيد'.";
+                } else if (q.includes('بيع') || q.includes('فاتورة')) {
+                    reponse = "لتسجيل عملية بيع وطباعة فاتورة، اختر المنتج من قسم 'تسجيل البيع'، أدخل التفاصيل وانقر على تأكيد الفاتورة.";
                 } else if (q.includes('مرحبا') || q.includes('سلام')) {
                     reponse = "مرحباً بك! أنا مساعدك الذكي، كيف يمكنني مساعدتك اليوم في إدارة الخردوات؟";
                 } else if (q.includes('شكرا')) {
@@ -1154,31 +1402,31 @@
                 }
 
             // 3. ESPAGNOL
-            } else if (q.includes('hola') || q.includes('buenos') || q.includes('contraseña') || q.includes('inventario') || q.includes('venta') || q.includes('vender') || q.includes('gracias')) {
+            } else if (q.includes('hola') || q.includes('buenos') || q.includes('contraseña') || q.includes('inventario') || q.includes('venta') || q.includes('vender') || q.includes('factura') || q.includes('gracias')) {
                 lang = 'es-ES';
                 if (q.includes('contraseña') || q.includes('clave') || q.includes('olvidé')) {
                     reponse = "Si olvidaste tu contraseña o usuario, contacta al Súper Administrador para restablecerlo.";
                 } else if (q.includes('inventario') || q.includes('producto') || q.includes('añadir')) {
                     reponse = "Para añadir productos al inventario, completa el nombre y precio en la sección 'Añadir / Reabastecer Producto'.";
-                } else if (q.includes('venta') || q.includes('vender')) {
-                    reponse = "Para registrar una venta, selecciona el producto en 'Registrar una Venta', ingresa la cantidad y haz clic en 'Validar'.";
+                } else if (q.includes('venta') || q.includes('vender') || q.includes('factura')) {
+                    reponse = "Para registrar una venta e imprimir factura, selecciona el producto, ingresa la cantidad y haz clic en 'Confirmar y Facturar'.";
                 } else if (q.includes('hola') || q.includes('buenos')) {
                     reponse = "¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy con la gestión de tu ferretería?";
                 } else if (q.includes('gracias')) {
                     reponse = "¡De nada! Estoy aquí para ayudarte siempre que lo necesites.";
                 } else {
-                    reponse = "Lo siento, no entendí bien. ¿En qué te puedo ayudar con las ventas o el inventario?";
+                    reponse = "Lo siento, no entendí bien. ¿En qué te puedo ayudar con las ventas, facturas o inventario?";
                 }
 
             // 4. WOLOF
-            } else if (q.includes('nanga def') || q.includes('mangi fi') || q.includes('faté') || q.includes('yokk') || q.includes('jaay') || q.includes('xalis') || q.includes('jerejef')) {
+            } else if (q.includes('nanga def') || q.includes('mangi fi') || q.includes('faté') || q.includes('yokk') || q.includes('jaay') || q.includes('facture') || q.includes('xalis') || q.includes('jerejef')) {
                 lang = 'fr-FR';
                 if (q.includes('faté') || q.includes('passe')) {
                     reponse = "So fatée sa mot de passe walla sa identifiant, woowal Super Admin bi ngir mu fadial la ko.";
                 } else if (q.includes('yokk') || q.includes('stock')) {
                     reponse = "Ngir yokk produit ci stock bi, bindal tourou marchandise bi ak prix bi ci bloc 'Ajouter / Réapprovisionner un Produit'.";
-                } else if (q.includes('jaay') || q.includes('bind')) {
-                    reponse = "So beggé bind jaay (vente), tanlal produit bi ci bloc 'Enregistrer une Vente', bind quantité bi nga jaay ba noppi nga cliquer 'Valider'.";
+                } else if (q.includes('jaay') || q.includes('bind') || q.includes('facture')) {
+                    reponse = "So beggé bind jaay ak génné facture, tanlal produit bi, bind tourou client bi ak quantité bi nga jaay ba noppi nga cliquer 'Valider & Editer la Facture'.";
                 } else if (q.includes('nanga def') || q.includes('mangi fi')) {
                     reponse = "Mangi fi rekk jam rekk ! Lu ma la mën a dimbali tay ci gestion quincaillerie bi ?";
                 } else if (q.includes('xalis')) {
@@ -1196,8 +1444,8 @@
                     reponse = "Si vous avez oublié votre mot de passe, veuillez contacter le Super Administrateur pour le réinitialiser.";
                 } else if (q.includes('stock') || q.includes('produit') || q.includes('ajouter')) {
                     reponse = "Pour ajouter un produit au stock, remplissez le nom et le prix dans le bloc 'Ajouter / Réapprovisionner un Produit'.";
-                } else if (q.includes('vente') || q.includes('vendre')) {
-                    reponse = "Pour enregistrer une vente, sélectionnez l'article dans 'Enregistrer une Vente', indiquez la quantité puis cliquez sur 'Valider'.";
+                } else if (q.includes('vente') || q.includes('vendre') || q.includes('facture') || q.includes('reçu')) {
+                    reponse = "Pour enregistrer une vente et générer une facture, remplissez le formulaire d'enregistrement de vente puis consultez l'onglet 'Factures & Reçus' pour imprimer.";
                 } else if (q.includes('bonjour') || q.includes('salut') || q.includes('coucou')) {
                     reponse = "Bonjour ! Comment puis-je vous aider aujourd'hui dans la gestion de votre quincaillerie ?";
                 } else if (q.includes('merci') || q.includes('daccord') || q.includes('ok')) {
@@ -1229,7 +1477,7 @@
             
             if (isDemo) {
                 event.preventDefault();
-                alert("🎉 Bravo ! La vente fictive a été enregistrée avec succès. En version réelle, votre chiffre d'affaires et votre stock seraient mis à jour automatiquement !");
+                alert("🎉 Bravo ! La vente fictive et sa facture ont été enregistrées avec succès. En version réelle, votre chiffre d'affaires, votre stock et le registre des factures seraient mis à jour automatiquement !");
                 return false;
             }
         }
