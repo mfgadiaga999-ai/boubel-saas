@@ -1595,9 +1595,10 @@
         function enregistrerVente(event) {
             const isDemo = "{{ 'true' if is_demo else 'false' }}" === "true";
             
+            // 1. Vérifier que le panier n'est pas vide
             if (panierVente.length === 0) {
                 event.preventDefault();
-                alert("Veuillez ajouter au moins un produit au panier avant de valider la vente.");
+                alert("Veuillez ajouter au moins un produit au panier (+ Ajouter) avant de valider.");
                 return false;
             }
 
@@ -1605,6 +1606,7 @@
             const paiementSaisi = document.getElementById('vente-mode-paiement').value;
             const today = new Date().toISOString().split('T')[0];
 
+            // 2. En mode DÉMO : Affichage dynamique de la modale sans rechargement
             if (isDemo) {
                 event.preventDefault();
                 const numFacture = "FAC-" + String(compteurFactureGlobal).padStart(4, '0');
@@ -1612,12 +1614,15 @@
 
                 afficherFacture(numFacture, today, clientSaisi, panierVente, paiementSaisi);
 
-                // Réinitialisation du panier local
                 panierVente = [];
                 afficherPanier();
                 document.getElementById('vente-nom-client').value = "";
                 return false;
             }
+
+            // 3. En mode CONNECTÉ : Le formulaire se soumet normalement à Flask avec panier_json
+            document.getElementById('panier-json-input').value = JSON.stringify(panierVente);
+            return true;
         }
     </script>
 </body>
