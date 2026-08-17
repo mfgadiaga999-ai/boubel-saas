@@ -549,36 +549,58 @@ def supprimer_produit(id):
     flash("Article supprimé du stock.", "info")
     return redirect(url_for('index'))
 
+import json
+from flask import Flask, render_template, request, redirect, url_for, flash
+
 @app.route('/ajouter-vente', methods=['POST'])
 def ajouter_vente():
-    supabase = get_supabase_client()
-    q_id = session.get('quincaillerie_id')
-    if not session.get('connecte') or not q_id or not supabase:
+    nom_client = request.form.get('nom_client', '').strip() or 'Client Comptant'
+    mode_paiement = request.form.get('mode_paiement', 'Espèces')
+    panier_json = request.form.get('panier_json')
+
+    # Si le panier JSON est fourni (gestion multi-produits)
+    if panier_json:
+        try:
+            panier = json.loads(panier_json)
+        except Exception:
+            flash("Format de panier invalide.", "danger")
+            return redirect(url_for('index'))
+
+        if not panier:
+            flash("Le panier est vide.", "danger")
+            return redirect(url_for('index'))
+
+        # Traitement de chaque article du panier
+        for item in panier:
+            nom_produit = item.get('nom')
+            quantite = int(item.get('qte', 0))
+
+            # Rechercher le produit en BDD
+            produit = Produit.query.filter_by(nom_affichage=nom_produit).first() # Adaptez selon votre ORM/SQL
+
+            if not produit or produit.stock_total < quantite:
+                flash(f"Stock insuffisant pour {nom_produit}.", "danger")
+                return redirect(url_for('index'))
+
+            # Décrémenter le stock et enregistrer la vente
+            produit.stock_total -= quantite
+            
+            nouvelle_vente = Vente(
+                nom_produit=nom_produit,
+                quantite_vendue=quantite,
+                prix_vente=item.get('prix', produit.prix_unitaire),
+                nom_client=nom_client,
+                mode_paiement=mode_paiement,
+                vendu_par=session.get('nom_utilisateur', 'Gérant')
+            )
+            db.session.add(nouvelle_vente)
+
+        db.session.commit()
+        flash("Vente enregistrée avec succès !", "success")
         return redirect(url_for('index'))
 
-    nom_produit = request.form.get('nom', '').strip()
-    quantite = int(request.form.get('quantite', 0))
-    date_vente = request.form.get('date', datetime.now().strftime('%Y-%m-%d'))
-
-    res = supabase.table('stock').select('*').eq('quincaillerie_id', q_id).eq('nom', nom_produit).execute()
-    existing = res.data or []
-
-    if not existing or existing[0]['quantite'] < quantite:
-        flash("Stock insuffisant ou article inexistant.", "danger")
-        return redirect(url_for('index'))
-
-    produit = existing[0]
-    supabase.table('stock').update({'quantite': produit['quantite'] - quantite}).eq('id', produit['id']).execute()
-    supabase.table('ventes').insert({
-        'quincaillerie_id': q_id,
-        'nom_produit': nom_produit,
-        'quantite_vendue': quantite,
-        'prix_vente': produit['prix_unitaire'],
-        'date_vente': date_vente,
-        'vendu_par': session.get('nom_utilisateur')
-    }).execute()
-
-    flash("Vente enregistrée !", "success")
+    # Fallback si envoi simple sans panier JSON
+    flash("Stock insuffisant ou article inexistant.", "danger")
     return redirect(url_for('index'))
 
 @app.route('/supprimer-vente/<int:id>')
