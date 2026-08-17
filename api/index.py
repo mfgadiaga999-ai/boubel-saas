@@ -571,7 +571,7 @@ def ajouter_vente():
             quantite_vendue = int(item.get('qte', 0))
             prix_unitaire = float(item.get('prix', 0))
 
-            # 1. Recherche dans la table 'stock' (et non 'action')
+            # 1. Recherche du produit dans la table 'stock'
             response = supabase.table('stock') \
                 .select('*') \
                 .eq('nom', nom_produit) \
@@ -589,13 +589,13 @@ def ajouter_vente():
                 flash(f"Stock insuffisant pour {nom_produit}.", "danger")
                 return redirect(url_for('index'))
 
-            # 2. Mise à jour de la quantité dans la table 'stock'
+            # 2. Mise à jour de la quantité dans la table 'stock' avec la colonne 'id'
             supabase.table('stock') \
                 .update({'quantite': nouveau_stock}) \
-                .eq('identifiant', produit['identifiant']) \
+                .eq('id', produit['id']) \
                 .execute()
 
-            # 3. Insertion de la vente dans la table 'ventes'
+            # 3. Insertion dans la table 'ventes'
             nouvelle_vente = {
                 'quincaillerie_id': quincaillerie_id,
                 'nom_produit': nom_produit,
