@@ -20,7 +20,8 @@ def favicon():
 SUPABASE_URL = "https://ogihumifxluovsrzlgve.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9naWh1bWlmeGx1b3ZzcnpsZ3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDk2NTQsImV4cCI6MjEwMjIyNTY1NH0.g64nxtVh5EhlO3LlOUO1aEIRkFGJglaDeBXQLikCR5o"
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+def get_supabase_client() -> Client:
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/demo')
 def mode_demo():
