@@ -297,22 +297,29 @@
             }
         }
 
-        /* Style pour l'impression de la facture */
+        /* Correctif pour l'impression sur 1 seule page */
         @media print {
             body * {
-                visibility: hidden;
+                visibility: hidden !important;
             }
             #section-impression-facture, #section-impression-facture * {
-                visibility: visible;
+                visibility: visible !important;
             }
             #section-impression-facture {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                page-break-inside: avoid !important;
             }
-            .modal-footer, .btn-close {
+            .modal-footer, .btn-close, .no-print {
                 display: none !important;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
             }
         }
     </style>
@@ -483,37 +490,22 @@
                     </div>
                 </div>
 
-                <!-- ENREGISTRER UNE VENTE -->
+                <!-- ENREGISTRER UNE VENTE (SÉLECTION MULTI-PRODUITS AVEC PANIER) -->
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-success text-white fw-bold">
                             <i class="fa-solid fa-cart-shopping me-1"></i> <span data-i18n="enregistrer_vente_titre">Enregistrer une Vente & Générer Facture</span>
                         </div>
                         <div class="card-body">
-                            <form action="/ajouter-vente" method="POST" onsubmit="enregistrerVente(event)">
-                                <div class="row g-2">
-                                    <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold" data-i18n="lbl_selectionner_article">Sélectionner l'Article</label>
-                                        <select name="nom" class="form-select form-select-sm" required>
-                                            <option value="" data-i18n="opt_choisir_produit">-- Choisir un produit --</option>
-                                            {% if produits %}
-                                                {% for p in produits %}
-                                                    <option value="{{ p.nom_affichage }}">{{ p.nom_affichage }} (Stock: {{ p.stock_total }})</option>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </select>
+                            <form action="/ajouter-vente" method="POST" id="form-vente" onsubmit="enregistrerVente(event)">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold" data-i18n="lbl_nom_client">Nom du Client</label>
+                                        <input type="text" name="nom_client" id="vente-nom-client" class="form-control form-control-sm" placeholder="ex: Moussa Diallo (Vide = Client Comptant)">
                                     </div>
-                                    <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold" data-i18n="lbl_quantite_vendue">Quantité Vendue</label>
-                                        <input type="number" name="quantite" min="1" value="1" class="form-control form-control-sm" required>
-                                    </div>
-                                    <div class="col-md-6 mb-2">
-                                        <label class="form-label small fw-bold" data-i18n="lbl_nom_client">Nom du Client (Optionnel)</label>
-                                        <input type="text" name="nom_client" class="form-control form-control-sm" placeholder="ex: Client Comptant / Moussa Diallo">
-                                    </div>
-                                    <div class="col-md-6 mb-2">
+                                    <div class="col-md-6">
                                         <label class="form-label small fw-bold" data-i18n="lbl_mode_paiement">Mode de Paiement</label>
-                                        <select name="mode_paiement" class="form-select form-select-sm">
+                                        <select name="mode_paiement" id="vente-mode-paiement" class="form-select form-select-sm">
                                             <option value="Espèces" data-i18n="opt_especes">Espèces</option>
                                             <option value="Wave">Wave</option>
                                             <option value="Orange Money">Orange Money</option>
@@ -522,6 +514,50 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                <div class="p-2 border rounded bg-light mb-2">
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-5">
+                                            <label class="form-label small fw-bold" data-i18n="lbl_selectionner_article">Article</label>
+                                            <select id="select-article-panier" class="form-select form-select-sm">
+                                                <option value="" data-i18n="opt_choisir_produit">-- Choisir un produit --</option>
+                                                {% if produits %}
+                                                    {% for p in produits %}
+                                                        <option value="{{ p.nom_affichage }}" data-prix="{{ p.prix_unitaire or 0 }}" data-stock="{{ p.stock_total }}">{{ p.nom_affichage }} (Stock: {{ p.stock_total }})</option>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold" data-i18n="lbl_quantite_vendue">Qté</label>
+                                            <input type="number" id="qte-article-panier" min="1" value="1" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-bold" onclick="ajouterAuPanier()">
+                                                <i class="fa-solid fa-plus me-1"></i> Ajouter
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" name="panier_json" id="panier-json-input">
+
+                                <!-- Tableau récapitulatif du panier -->
+                                <table class="table table-sm table-bordered align-middle mb-2 text-center" style="font-size: 0.85rem;">
+                                    <thead class="table-secondary">
+                                        <tr>
+                                            <th class="text-start">Article</th>
+                                            <th>Qté</th>
+                                            <th>P.U</th>
+                                            <th>Total</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="panier-table-body">
+                                        <tr><td colspan="5" class="text-muted py-2">Aucun article dans le panier.</td></tr>
+                                    </tbody>
+                                </table>
+
                                 <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold mt-2">
                                     <i class="fa-solid fa-file-invoice-dollar me-1"></i> <span data-i18n="btn_valider_vente">Valider & Editer la Facture</span>
                                 </button>
@@ -621,11 +657,10 @@
                                                 <td class="fw-bold text-success" data-label="Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Vendu par"><span class="badge bg-light text-dark border">{{ v.vendu_par }}</span></td>
                                                 <td class="text-center" data-label="Action">
-                                                    <!-- Utilisation d'attributs data-* pour éviter les soulignements de syntaxe Jinja/JS -->
                                                     <button class="btn btn-outline-primary btn-sm me-1 btn-afficher-facture"
-                                                        data-numero="FAC-{{ v.id }}"
+                                                        data-numero="FAC-{{ '%04d' % loop.index }}"
                                                         data-date="{{ v.date_vente }}"
-                                                        data-client="{{ v.nom_client | default('Client Comptant', true) }}"
+                                                        data-client="{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}"
                                                         data-produit="{{ v.nom_produit }}"
                                                         data-quantite="{{ v.quantite_vendue }}"
                                                         data-prix="{{ v.prix_vente | default(0, true) }}"
@@ -663,17 +698,17 @@
                                         {% if factures %}
                                             {% for f in factures %}
                                             <tr>
-                                                <td class="fw-bold text-primary" data-label="N° Facture">{{ f.numero_facture or ('FAC-' ~ f.id) }}</td>
+                                                <td class="fw-bold text-primary" data-label="N° Facture">{{ f.numero_facture or ('FAC-' ~ ('%04d' % loop.index)) }}</td>
                                                 <td class="small" data-label="Date">{{ f.date_vente or f.date_facture }}</td>
-                                                <td data-label="Client"><b>{{ f.nom_client if f.nom_client else 'Client Comptant' }}</b></td>
+                                                <td data-label="Client"><b>{{ f.nom_client if (f.nom_client and f.nom_client.strip()) else 'Client Comptant' }}</b></td>
                                                 <td data-label="Désignation">{{ f.nom_produit }} (x{{ f.quantite_vendue }})</td>
                                                 <td class="fw-bold text-success" data-label="Montant Total">{{ "{:,.0f}".format((f.prix_vente or 0) * (f.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Paiement"><span class="badge bg-info text-dark"><i class="fa-solid fa-credit-card me-1"></i> {{ f.mode_paiement if f.mode_paiement else 'Espèces' }}</span></td>
                                                 <td class="text-center" data-label="Actions Facture">
                                                     <button class="btn btn-sm btn-primary fw-bold btn-afficher-facture"
-                                                        data-numero="{{ f.numero_facture | default('FAC-' ~ f.id, true) }}"
+                                                        data-numero="{{ f.numero_facture | default('FAC-' ~ ('%04d' % loop.index), true) }}"
                                                         data-date="{{ f.date_vente | default(f.date_facture, true) }}"
-                                                        data-client="{{ f.nom_client | default('Client Comptant', true) }}"
+                                                        data-client="{{ f.nom_client if (f.nom_client and f.nom_client.strip()) else 'Client Comptant' }}"
                                                         data-produit="{{ f.nom_produit }}"
                                                         data-quantite="{{ f.quantite_vendue }}"
                                                         data-prix="{{ f.prix_vente | default(0, true) }}"
@@ -686,17 +721,17 @@
                                         {% elif ventes %}
                                             {% for v in ventes %}
                                             <tr>
-                                                <td class="fw-bold text-primary" data-label="N° Facture">FAC-{{ v.id }}</td>
+                                                <td class="fw-bold text-primary" data-label="N° Facture">FAC-{{ "%04d" % loop.index }}</td>
                                                 <td class="small" data-label="Date">{{ v.date_vente }}</td>
-                                                <td data-label="Client"><b>{{ v.nom_client if v.nom_client else 'Client Comptant' }}</b></td>
+                                                <td data-label="Client"><b>{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}</b></td>
                                                 <td data-label="Désignation">{{ v.nom_produit }} (x{{ v.quantite_vendue }})</td>
                                                 <td class="fw-bold text-success" data-label="Montant Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Paiement"><span class="badge bg-info text-dark"><i class="fa-solid fa-wallet me-1"></i> {{ v.mode_paiement if v.mode_paiement else 'Espèces' }}</span></td>
                                                 <td class="text-center" data-label="Actions Facture">
                                                     <button class="btn btn-sm btn-primary fw-bold btn-afficher-facture"
-                                                        data-numero="FAC-{{ v.id }}"
+                                                        data-numero="FAC-{{ '%04d' % loop.index }}"
                                                         data-date="{{ v.date_vente }}"
-                                                        data-client="{{ v.nom_client | default('Client Comptant', true) }}"
+                                                        data-client="{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}"
                                                         data-produit="{{ v.nom_produit }}"
                                                         data-quantite="{{ v.quantite_vendue }}"
                                                         data-prix="{{ v.prix_vente | default(0, true) }}"
@@ -721,7 +756,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE VISUALISATION ET IMPRESSION DE FACTURE -->
+    <!-- MODAL DE VISUALISATION ET IMPRESSION DE FACTURE MULTI-PRODUITS -->
     <div class="modal fade" id="modalFacture" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -736,7 +771,7 @@
                             <p class="small text-muted mb-0">Quincaillerie générale, matériaux de construction & outillage</p>
                         </div>
                         <div class="text-end">
-                            <h5 class="fw-bold text-dark mb-0" id="fac-num">FAC-0000</h5>
+                            <h5 class="fw-bold text-dark mb-0" id="fac-num">FAC-0001</h5>
                             <span class="small text-muted" id="fac-date">Date: --/--/----</span>
                         </div>
                     </div>
@@ -761,13 +796,8 @@
                                 <th class="text-end">Total</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td id="fac-article" class="fw-bold">Article Exemple</td>
-                                <td id="fac-qte" class="text-center">1</td>
-                                <td id="fac-pu" class="text-end">0 FCFA</td>
-                                <td id="fac-tot" class="text-end fw-bold text-success">0 FCFA</td>
-                            </tr>
+                        <tbody id="fac-table-items">
+                            <!-- Généré dynamiquement -->
                         </tbody>
                         <tfoot>
                             <tr>
@@ -884,6 +914,80 @@
     <!-- Scripts Bootstrap et Logique JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // --- LOGIQUE GESTION MULTI-PRODUITS (PANIER) ---
+        let panierVente = [];
+        let compteurFactureGlobal = 1;
+
+        function ajouterAuPanier() {
+            const select = document.getElementById('select-article-panier');
+            const selectedOption = select.options[select.selectedIndex];
+            const nom = select.value;
+            const qte = parseInt(document.getElementById('qte-article-panier').value) || 1;
+
+            if (!nom) {
+                alert("Veuillez sélectionner un article.");
+                return;
+            }
+
+            const prix = parseFloat(selectedOption.getAttribute('data-prix')) || 0;
+            const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
+
+            if (qte > stock) {
+                alert("La quantité choisie dépasse le stock disponible (" + stock + ").");
+                return;
+            }
+
+            const indexExistant = panierVente.findIndex(item => item.nom === nom);
+            if (indexExistant !== -1) {
+                panierVente[indexExistant].qte += qte;
+            } else {
+                panierVente.push({ nom, qte, prix });
+            }
+
+            // Réinitialiser la sélection
+            select.value = "";
+            document.getElementById('qte-article-panier').value = 1;
+
+            afficherPanier();
+        }
+
+        function supprimerDuPanier(index) {
+            panierVente.splice(index, 1);
+            afficherPanier();
+        }
+
+        function afficherPanier() {
+            const tbody = document.getElementById('panier-table-body');
+            tbody.innerHTML = "";
+
+            if (panierVente.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-muted py-2">Aucun article dans le panier.</td></tr>';
+                document.getElementById('panier-json-input').value = "";
+                return;
+            }
+
+            let format = (val) => new Intl.NumberFormat('fr-FR').format(val);
+
+            panierVente.forEach((item, index) => {
+                const total = item.qte * item.prix;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="text-start fw-bold">${item.nom}</td>
+                        <td>${item.qte}</td>
+                        <td>${format(item.prix)}</td>
+                        <td class="fw-bold text-success">${format(total)}</td>
+                        <td>
+                            <button type="button" class="btn btn-outline-danger btn-sm p-0 px-1" onclick="supprimerDuPanier(${index})">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('panier-json-input').value = JSON.stringify(panierVente);
+        }
+
         const dictionnaireTraductions = {
             fr: {
                 connecte: "Connecté",
@@ -1165,7 +1269,7 @@
                 ajouter_produit_titre: "Añadir / Reabastecer Producto",
                 lbl_nom_article: "Nombre del Artículo",
                 lbl_prix_unitaire: "Precio Unitario (FCFA)",
-                lbl_quantite_ajoutee: "Cantidad Añadida",
+                lbl_quantite_añadida: "Cantidad Añadida",
                 lbl_seuil_alerte: "Umbral de Alerta",
                 btn_ajouter: "Guardar en Inventario",
                 enregistrer_vente_titre: "Registrar una Venta y Factura",
@@ -1254,7 +1358,7 @@
             if (select) select.value = langueSauvegardee;
             changerLangue(langueSauvegardee);
 
-            // Gestionnaire d'événement pour l'affichage de la facture via attributs data-*
+            // Gestionnaire d'événement pour l'affichage de la facture
             document.body.addEventListener('click', function(e) {
                 const btn = e.target.closest('.btn-afficher-facture');
                 if (btn) {
@@ -1266,7 +1370,7 @@
                     const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
                     const paiement = btn.getAttribute('data-paiement');
 
-                    afficherFacture(numero, date, client, produit, quantite, prix, paiement);
+                    afficherFacture(numero, date, client, [{ nom: produit, qte: quantite, prix: prix }], paiement);
                 }
             });
         });
@@ -1292,20 +1396,34 @@
             }
         }
 
-        function afficherFacture(numero, date, client, article, qte, prixUnit, paiement) {
+        function afficherFacture(numero, date, client, items, paiement) {
             document.getElementById('fac-num').innerText = numero;
             document.getElementById('fac-date').innerText = 'Date: ' + date;
-            document.getElementById('fac-client').innerText = client;
+            
+            // Corrige l'affichage dynamique du nom client
+            const nomClientAffiche = (client && client.trim() !== "") ? client : "Client Comptant";
+            document.getElementById('fac-client').innerText = nomClientAffiche;
             document.getElementById('fac-mode').innerText = paiement;
-            document.getElementById('fac-article').innerText = article;
-            document.getElementById('fac-qte').innerText = qte;
-            
-            const total = qte * prixUnit;
+
+            const tbody = document.getElementById('fac-table-items');
+            tbody.innerHTML = "";
+            let totalGeneral = 0;
             const formatPrix = (val) => new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
-            
-            document.getElementById('fac-pu').innerText = formatPrix(prixUnit);
-            document.getElementById('fac-tot').innerText = formatPrix(total);
-            document.getElementById('fac-grand-total').innerText = formatPrix(total);
+
+            items.forEach(item => {
+                const totalLigne = item.qte * item.prix;
+                totalGeneral += totalLigne;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold">${item.nom}</td>
+                        <td class="text-center">${item.qte}</td>
+                        <td class="text-end">${formatPrix(item.prix)}</td>
+                        <td class="text-end fw-bold text-success">${formatPrix(totalLigne)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('fac-grand-total').innerText = formatPrix(totalGeneral);
 
             const modalElement = new bootstrap.Modal(document.getElementById('modalFacture'));
             modalElement.show();
@@ -1477,9 +1595,27 @@
         function enregistrerVente(event) {
             const isDemo = "{{ 'true' if is_demo else 'false' }}" === "true";
             
+            if (panierVente.length === 0) {
+                event.preventDefault();
+                alert("Veuillez ajouter au moins un produit au panier avant de valider la vente.");
+                return false;
+            }
+
+            const clientSaisi = document.getElementById('vente-nom-client').value.trim();
+            const paiementSaisi = document.getElementById('vente-mode-paiement').value;
+            const today = new Date().toISOString().split('T')[0];
+
             if (isDemo) {
                 event.preventDefault();
-                alert("🎉 Bravo ! La vente fictive et sa facture ont été enregistrées avec succès. En version réelle, votre chiffre d'affaires, votre stock et le registre des factures seraient mis à jour automatiquement !");
+                const numFacture = "FAC-" + String(compteurFactureGlobal).padStart(4, '0');
+                compteurFactureGlobal++;
+
+                afficherFacture(numFacture, today, clientSaisi, panierVente, paiementSaisi);
+
+                // Réinitialisation du panier local
+                panierVente = [];
+                afficherPanier();
+                document.getElementById('vente-nom-client').value = "";
                 return false;
             }
         }
