@@ -17,17 +17,10 @@ def favicon():
     return '', 204
 
 # 3. Configuration Supabase
-SUPABASE_URL = os.environ.get("https://ogihumifxluovsrzlgve.supabase.co", "").strip()
-SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9naWh1bWlmeGx1b3ZzcnpsZ3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDk2NTQsImV4cCI6MjEwMjIyNTY1NH0.g64nxtVh5EhlO3LlOUO1aEIRkFGJglaDeBXQLikCR5o", "").strip()
+SUPABASE_URL = "https://ogihumifxluovsrzlgve.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9naWh1bWlmeGx1b3ZzcnpsZ3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDk2NTQsImV4cCI6MjEwMjIyNTY1NH0.g64nxtVh5EhlO3LlOUO1aEIRkFGJglaDeBXQLikCR5o"
 
-def get_supabase_client():
-    if SUPABASE_URL and SUPABASE_KEY:
-        try:
-            return create_client(SUPABASE_URL, SUPABASE_KEY)
-        except Exception as e:
-            print(f"Erreur Supabase: {e}")
-            return None
-    return None
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/demo')
 def mode_demo():
@@ -567,17 +560,16 @@ def ajouter_vente():
             flash("Le panier est vide.", "danger")
             return redirect(url_for('index'))
 
-        # Récupération de l'ID de la quincaillerie depuis la session (par défaut 1 si non spécifié)
         quincaillerie_id = session.get('quincaillerie_id', 1) 
         vendu_par_user = session.get('nom_utilisateur', 'Gérant')
-        date_du_jour = date.today().isoformat()  # Format YYYY-MM-DD pour la colonne date_vente
+        date_du_jour = date.today().isoformat()
 
         for item in panier:
             nom_produit = item.get('nom')
             quantite_vendue = int(item.get('qte', 0))
             prix_unitaire = float(item.get('prix', 0))
 
-            # 1. Recherche du produit dans la table 'action'
+            # 1. Vérifier la présence de l'article dans la table 'action'
             response = supabase.table('action') \
                 .select('*') \
                 .eq('nom', nom_produit) \
@@ -595,13 +587,13 @@ def ajouter_vente():
                 flash(f"Stock insuffisant pour {nom_produit}.", "danger")
                 return redirect(url_for('index'))
 
-            # 2. Mise à jour de la quantité dans la table 'action'
+            # 2. Mettre à jour le stock dans la table 'action'
             supabase.table('action') \
                 .update({'quantite': nouveau_stock}) \
                 .eq('identifiant', produit['identifiant']) \
                 .execute()
 
-            # 3. Insertion dans la table 'ventes' (strictement alignée sur le schéma SQL)
+            # 3. Insérer la vente dans la table 'ventes'
             nouvelle_vente = {
                 'quincaillerie_id': quincaillerie_id,
                 'nom_produit': nom_produit,
@@ -617,7 +609,7 @@ def ajouter_vente():
         return redirect(url_for('index'))
 
     except Exception as e:
-        flash(f"Erreur d'enregistrement : {str(e)}", "danger")
+        flash(f"Erreur Supabase : {str(e)}", "danger")
         return redirect(url_for('index'))
 
 @app.route('/supprimer-vente/<int:id>')
