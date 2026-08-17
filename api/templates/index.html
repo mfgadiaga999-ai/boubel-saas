@@ -24,7 +24,7 @@
         body.dark-mode .card .card,
         body.dark-mode .bg-light,
         body.dark-mode .bg-white {
-            background-color: #1e293b !important; /* Force un fond sombre au lieu du blanc */
+            background-color: #1e293b !important;
             color: #f1f5f9 !important;
             border-color: #334155 !important;
         }
@@ -48,8 +48,8 @@
         }
 
         body.dark-mode .nav-tabs .nav-link.active {
-            color: #3b82f6 !important; /* Bleu vif pour l'onglet actif */
-            background-color: #172033 !important; /* Même fond que la carte au lieu de Blanc */
+            color: #3b82f6 !important;
+            background-color: #172033 !important;
             border-color: #27354f #27354f #172033 !important;
             font-weight: bold;
         }
@@ -69,8 +69,8 @@
         body.dark-mode .table thead,
         body.dark-mode .table thead tr,
         body.dark-mode .table thead th {
-            background-color: #0f172a !important; /* En-tête sombre au lieu de blanc */
-            color: #94a3b8 !important;             /* Gris clair pour les titres */
+            background-color: #0f172a !important;
+            color: #94a3b8 !important;
             border-bottom: 2px solid #27354f !important;
         }
 
@@ -358,12 +358,9 @@
             {% endif %}
         {% endwith %}
 
-        <!-- =========================================================
-            DASHBOARD COMPLET (ACCESSIBLE SI CONNECTÉ OU SUR /DEMO)
-            ========================================================= -->
+        <!-- DASHBOARD COMPLET -->
         <div id="dashboard-section" class="container-fluid py-3 p-0">
 
-            <!-- BANNIÈRE EN-TÊTE DÉMO -->
             {% if is_demo %}
             <div class="alert alert-warning border-0 rounded-3 mb-4 d-flex flex-wrap align-items-center justify-content-between p-3 shadow-sm" style="background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%); color: #78350f;">
                 <div class="d-flex align-items-center mb-1 mb-md-0">
@@ -376,12 +373,11 @@
             </div>
             {% endif %}
 
-            <!-- TITRE BIENVENUE -->
             <h3 class="fw-bold mb-4">
                 <span data-i18n="titre_dashboard">Bienvenue sur votre Dashboard</span> {% if is_demo %}<span class="text-warning">(Démo)</span>{% endif %}
             </h3>
 
-            <!-- 1. KPI D'ACTIVITÉ GÉRANT -->
+            <!-- 1. KPI D'ACTIVITÉ -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm p-3 text-center bg-white border-start border-success border-4">
@@ -421,7 +417,7 @@
                 </div>
             </div>
 
-            <!-- 2. SECTION ASSISTANT INTELLIGENT DE STOCK -->
+            <!-- 2. ASSISTANT INTELLIGENT -->
             {% if gerant_insights %}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center">
@@ -487,7 +483,7 @@
                     </div>
                 </div>
 
-                <!-- ENREGISTRER UNE VENTE (Inclus sélection Client & Mode de paiement pour les factures) -->
+                <!-- ENREGISTRER UNE VENTE -->
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-success text-white fw-bold">
@@ -549,7 +545,6 @@
                                 <i class="fa-solid fa-list-check me-1"></i> <span data-i18n="onglets_ventes">Historique des Ventes</span> ({{ ventes|length if ventes is defined else 0 }})
                             </button>
                         </li>
-                        <!-- MODIFICATION : AJOUT DE L'ONGLET FACTURES -->
                         <li class="nav-item">
                             <button class="nav-link fw-bold" id="factures-tab" data-bs-toggle="tab" data-bs-target="#factures" type="button">
                                 <i class="fa-solid fa-receipt me-1"></i> <span data-i18n="onglets_factures">Factures & Reçus</span> ({{ (factures|length if factures is defined else (ventes|length if ventes is defined else 0)) }})
@@ -626,11 +621,18 @@
                                                 <td class="fw-bold text-success" data-label="Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Vendu par"><span class="badge bg-light text-dark border">{{ v.vendu_par }}</span></td>
                                                 <td class="text-center" data-label="Action">
-                                                    <!-- MODIFICATION : BOUTON IMPRIMER FACTURE -->
-                                                    <button class="btn btn-outline-primary btn-sm me-1" onclick="afficherFacture('FAC-{{ v.id }}', '{{ v.date_vente }}', '{{ v.nom_client if v.nom_client else 'Client Comptant' }}', '{{ v.nom_produit }}', {{ v.quantite_vendue }}, {{ v.prix_vente or 0 }}, '{{ v.mode_paiement if v.mode_paiement else 'Espèces' }}')">
+                                                    <!-- Utilisation d'attributs data-* pour éviter les soulignements de syntaxe Jinja/JS -->
+                                                    <button class="btn btn-outline-primary btn-sm me-1 btn-afficher-facture"
+                                                        data-numero="FAC-{{ v.id }}"
+                                                        data-date="{{ v.date_vente }}"
+                                                        data-client="{{ v.nom_client | default('Client Comptant', true) }}"
+                                                        data-produit="{{ v.nom_produit }}"
+                                                        data-quantite="{{ v.quantite_vendue }}"
+                                                        data-prix="{{ v.prix_vente | default(0, true) }}"
+                                                        data-paiement="{{ v.mode_paiement | default('Espèces', true) }}">
                                                         <i class="fa-solid fa-print"></i>
                                                     </button>
-                                                    <a href="/supprimer-vente/{{ v.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette vente ? Le stock sera restitué.')"><i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_annuler">Annuler</span></a>
+                                                    <a href="/supprimer-vente/{{ v.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette vente ? Le stock sera restitué.');"><i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_annuler">Annuler</span></a>
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -642,7 +644,7 @@
                             </div>
                         </div>
 
-                        <!-- MODIFICATION : NOUVEL ONGLET DES FACTURES -->
+                        <!-- ONGLET FACTURES -->
                         <div class="tab-pane fade" id="factures" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-adaptive align-middle mb-0">
@@ -668,7 +670,14 @@
                                                 <td class="fw-bold text-success" data-label="Montant Total">{{ "{:,.0f}".format((f.prix_vente or 0) * (f.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Paiement"><span class="badge bg-info text-dark"><i class="fa-solid fa-credit-card me-1"></i> {{ f.mode_paiement if f.mode_paiement else 'Espèces' }}</span></td>
                                                 <td class="text-center" data-label="Actions Facture">
-                                                    <button class="btn btn-sm btn-primary fw-bold" onclick="afficherFacture('{{ f.numero_facture or ('FAC-' ~ f.id) }}', '{{ f.date_vente or f.date_facture }}', '{{ f.nom_client if f.nom_client else 'Client Comptant' }}', '{{ f.nom_produit }}', {{ f.quantite_vendue }}, {{ f.prix_vente or 0 }}, '{{ f.mode_paiement if f.mode_paiement else 'Espèces' }}')">
+                                                    <button class="btn btn-sm btn-primary fw-bold btn-afficher-facture"
+                                                        data-numero="{{ f.numero_facture | default('FAC-' ~ f.id, true) }}"
+                                                        data-date="{{ f.date_vente | default(f.date_facture, true) }}"
+                                                        data-client="{{ f.nom_client | default('Client Comptant', true) }}"
+                                                        data-produit="{{ f.nom_produit }}"
+                                                        data-quantite="{{ f.quantite_vendue }}"
+                                                        data-prix="{{ f.prix_vente | default(0, true) }}"
+                                                        data-paiement="{{ f.mode_paiement | default('Espèces', true) }}">
                                                         <i class="fa-solid fa-eye me-1"></i> <span data-i18n="btn_voir_facture">Voir / Imprimer</span>
                                                     </button>
                                                 </td>
@@ -684,7 +693,14 @@
                                                 <td class="fw-bold text-success" data-label="Montant Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Paiement"><span class="badge bg-info text-dark"><i class="fa-solid fa-wallet me-1"></i> {{ v.mode_paiement if v.mode_paiement else 'Espèces' }}</span></td>
                                                 <td class="text-center" data-label="Actions Facture">
-                                                    <button class="btn btn-sm btn-primary fw-bold" onclick="afficherFacture('FAC-{{ v.id }}', '{{ v.date_vente }}', '{{ v.nom_client if v.nom_client else 'Client Comptant' }}', '{{ v.nom_produit }}', {{ v.quantite_vendue }}, {{ v.prix_vente or 0 }}, '{{ v.mode_paiement if v.mode_paiement else 'Espèces' }}')">
+                                                    <button class="btn btn-sm btn-primary fw-bold btn-afficher-facture"
+                                                        data-numero="FAC-{{ v.id }}"
+                                                        data-date="{{ v.date_vente }}"
+                                                        data-client="{{ v.nom_client | default('Client Comptant', true) }}"
+                                                        data-produit="{{ v.nom_produit }}"
+                                                        data-quantite="{{ v.quantite_vendue }}"
+                                                        data-prix="{{ v.prix_vente | default(0, true) }}"
+                                                        data-paiement="{{ v.mode_paiement | default('Espèces', true) }}">
                                                         <i class="fa-solid fa-print me-1"></i> <span data-i18n="btn_imprimer">Imprimer Reçu</span>
                                                     </button>
                                                 </td>
@@ -705,7 +721,7 @@
         </div>
     </div>
 
-    <!-- MODIFICATION : MODAL DE VISUALISATION ET IMPRESSION DE FACTURE -->
+    <!-- MODAL DE VISUALISATION ET IMPRESSION DE FACTURE -->
     <div class="modal fade" id="modalFacture" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -776,18 +792,15 @@
     </div>
 
     {% else %}
-    <!-- PAGE DE CONNEXION (S'affiche uniquement si non connecté ET hors démo) -->
+    <!-- PAGE DE CONNEXION -->
     <div class="container d-flex justify-content-center align-items-center vh-100">
         <div class="card border-0 shadow-lg p-4" style="width: 100%; max-width: 400px;">
-            
-            <!-- En-tête de la carte -->
             <div class="text-center mb-4">
                 <i class="fa-solid fa-store fa-3x text-primary mb-2"></i>
                 <h4 class="fw-bold text-dark" data-i18n="connexion_titre">Connexion SaaS</h4>
                 <p class="text-muted small" data-i18n="connexion_sous_titre">Espace Quincaillerie & Administration</p>
             </div>
 
-            <!-- Messages d'erreur / succès Flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -799,7 +812,6 @@
                 {% endif %}
             {% endwith %}
 
-            <!-- Formulaire de connexion -->
             <form action="/login" method="POST">
                 <div class="mb-3">
                     <label class="form-label small fw-bold" data-i18n="identifiant">Identifiant</label>
@@ -820,7 +832,6 @@
                 </button>
             </form>
 
-            <!-- Bouton d'accès direct au Mode Démo -->
             <div class="text-center mt-4 pt-3 border-top">
                 <p class="text-muted small mb-2" data-i18n="question_decouvrir">Vous souhaitez découvrir la plateforme ?</p>
                 <a href="/demo" class="btn btn-outline-success rounded-pill w-100 fw-bold py-2">
@@ -832,19 +843,12 @@
     </div>
     {% endif %}
 
-    <!-- =========================================================
-        WIDGET CHATBOT INTERACTIF ET VOCAL MULTILINGUE
-        ========================================================= -->
-
-    <!-- Bouton Flottant (Bulle de discussion) -->
+    <!-- WIDGET CHATBOT INTERACTIF -->
     <button id="chatbot-toggle-btn" class="btn btn-primary shadow-lg rounded-circle" onclick="toggleChatbot()" style="position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; z-index: 1050; font-size: 24px; display: flex; align-items: center; justify-content: center;">
         <i id="chatbot-icon" class="fas fa-comments"></i>
     </button>
 
-    <!-- Fenêtre de Chat -->
     <div id="chatbot-window" class="card shadow-lg border-0 d-none" style="position: fixed; bottom: 95px; right: 25px; width: 350px; max-width: 90vw; height: 460px; z-index: 1050; border-radius: 15px; overflow: hidden; flex-direction: column;">
-        
-        <!-- En-tête du Chat -->
         <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between p-3">
             <div class="d-flex align-items-center">
                 <i class="fas fa-robot fa-lg me-2"></i>
@@ -856,9 +860,7 @@
             <button type="button" class="btn-close btn-close-white" onclick="toggleChatbot()"></button>
         </div>
 
-        <!-- Corps de la discussion -->
         <div id="chatbot-messages" class="card-body p-3" style="overflow-y: auto; flex-grow: 1; background-color: #f8fafc;">
-            <!-- Message de bienvenue avec bouton vocal -->
             <div class="d-flex mb-3 align-items-start">
                 <div class="bg-white p-2 px-3 rounded shadow-sm border me-2" style="max-width: 80%; font-size: 13px; color: #333;" data-i18n="cb_welcome">
                     👋 Nanga def ! Lu ma la mën a dimbali tay ?
@@ -869,7 +871,6 @@
             </div>
         </div>
 
-        <!-- Pied de page avec champ de saisie -->
         <div class="card-footer bg-white border-top p-2">
             <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
                 <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Posez une question..." required autocomplete="off">
@@ -883,7 +884,6 @@
     <!-- Scripts Bootstrap et Logique JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Dictionnaire complet des traductions de l'interface
         const dictionnaireTraductions = {
             fr: {
                 connecte: "Connecté",
@@ -1217,7 +1217,6 @@
             }
         };
 
-        // Fonction pour traduire dynamiquement l'interface
         function changerLangue(langue) {
             localStorage.setItem('langue_preferee', langue);
 
@@ -1238,7 +1237,6 @@
             });
         }
 
-        // Appliquer la langue enregistrée au chargement de la page
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme');
             const icon = document.getElementById('theme-icon');
@@ -1255,9 +1253,24 @@
             const select = document.getElementById('language-select');
             if (select) select.value = langueSauvegardee;
             changerLangue(langueSauvegardee);
+
+            // Gestionnaire d'événement pour l'affichage de la facture via attributs data-*
+            document.body.addEventListener('click', function(e) {
+                const btn = e.target.closest('.btn-afficher-facture');
+                if (btn) {
+                    const numero = btn.getAttribute('data-numero');
+                    const date = btn.getAttribute('data-date');
+                    const client = btn.getAttribute('data-client');
+                    const produit = btn.getAttribute('data-produit');
+                    const quantite = parseFloat(btn.getAttribute('data-quantite')) || 0;
+                    const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
+                    const paiement = btn.getAttribute('data-paiement');
+
+                    afficherFacture(numero, date, client, produit, quantite, prix, paiement);
+                }
+            });
         });
 
-        // Fonction pour basculer le thème
         function toggleTheme() {
             const body = document.body;
             const icon = document.getElementById('theme-icon');
@@ -1279,7 +1292,6 @@
             }
         }
 
-        // MODIFICATION : Fonction pour charger et afficher dynamiquement une facture dans la modale
         function afficherFacture(numero, date, client, article, qte, prixUnit, paiement) {
             document.getElementById('fac-num').innerText = numero;
             document.getElementById('fac-date').innerText = 'Date: ' + date;
@@ -1299,7 +1311,6 @@
             modalElement.show();
         }
 
-        // Fonction pour lire le texte à voix haute (Synthèse vocale multilingue)
         function parlerTexte(texte, lang = 'fr-FR') {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
@@ -1367,7 +1378,6 @@
             let reponse = "";
             let lang = 'fr-FR';
 
-            // 1. ANGLAIS
             if (q.includes('hello') || q.includes('hi') || q.includes('how are you') || q.includes('help') || q.includes('password') || q.includes('stock') || q.includes('sell') || q.includes('sale') || q.includes('invoice') || q.includes('thanks') || q.includes('thank you')) {
                 lang = 'en-US';
                 if (q.includes('password') || q.includes('login') || q.includes('forgot')) {
@@ -1383,8 +1393,6 @@
                 } else {
                     reponse = "I didn't quite catch that. How can I assist you with your inventory, sales or invoices?";
                 }
-
-            // 2. ARABE
             } else if (q.includes('مرحبا') || q.includes('سلام') || q.includes('كيف') || q.includes('كلمة السر') || q.includes('مخزون') || q.includes('بيع') || q.includes('فاتورة') || q.includes('شكرا')) {
                 lang = 'ar-SA';
                 if (q.includes('كلمة السر') || q.includes('دخول')) {
@@ -1400,8 +1408,6 @@
                 } else {
                     reponse = "عذراً، لم أفهم طلبك جيدا. كيف يمكنني مساعدتك؟";
                 }
-
-            // 3. ESPAGNOL
             } else if (q.includes('hola') || q.includes('buenos') || q.includes('contraseña') || q.includes('inventario') || q.includes('venta') || q.includes('vender') || q.includes('factura') || q.includes('gracias')) {
                 lang = 'es-ES';
                 if (q.includes('contraseña') || q.includes('clave') || q.includes('olvidé')) {
@@ -1417,8 +1423,6 @@
                 } else {
                     reponse = "Lo siento, no entendí bien. ¿En qué te puedo ayudar con las ventas, facturas o inventario?";
                 }
-
-            // 4. WOLOF
             } else if (q.includes('nanga def') || q.includes('mangi fi') || q.includes('faté') || q.includes('yokk') || q.includes('jaay') || q.includes('facture') || q.includes('xalis') || q.includes('jerejef')) {
                 lang = 'fr-FR';
                 if (q.includes('faté') || q.includes('passe')) {
@@ -1436,8 +1440,6 @@
                 } else {
                     reponse = "Baal ma, degguma li nga wax. So beggé dimbal gu gaw, woowal sa Admin.";
                 }
-
-            // 5. FRANÇAIS
             } else {
                 lang = 'fr-FR';
                 if (q.includes('mot de passe') || q.includes('passe') || q.includes('connexion') || q.includes('login')) {
