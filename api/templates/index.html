@@ -322,6 +322,43 @@
                 margin: 10mm;
             }
         }
+
+        /* Style spécial pour l'impression / sauvegarde en PDF */
+        @media print {
+            /* 1. Masquer tout le tableau de bord et l'arrière-plan */
+            body * {
+                visibility: hidden !important;
+            }
+
+            /* 2. Afficher uniquement la modale de facture */
+            #modalFacture, #modalFacture * {
+                visibility: visible !important;
+            }
+
+            /* 3. Ajuster la facture pour qu'elle prenne toute la page sans débordaement */
+            #modalFacture {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            /* 4. Masquer les boutons "Fermer", "Imprimer" et la croix lors de l'impression */
+            .modal-footer, .btn, .btn-close, button {
+                display: none !important;
+            }
+
+            /* 5. Forcer le format A4 compact */
+            @page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -501,7 +538,7 @@
                                 <div class="row g-2 mb-2">
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold" data-i18n="lbl_nom_client">Nom du Client</label>
-                                        <input type="text" name="nom_client" id="vente-nom-client" class="form-control form-control-sm" placeholder="ex: Moussa Diallo (Vide = Client Comptant)">
+                                        <input type="text" id="vente-nom-client" class="form-control" placeholder="ex: Moussa Diallo (Vide = Client Comptant)">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold" data-i18n="lbl_mode_paiement">Mode de Paiement</label>
@@ -1593,35 +1630,30 @@
         }
 
         function enregistrerVente(event) {
-            const isDemo = "{{ 'true' if is_demo else 'false' }}" === "true";
-            
-            // 1. Vérifier que le panier n'est pas vide
-            if (panierVente.length === 0) {
-                event.preventDefault();
-                alert("Veuillez ajouter au moins un produit au panier (+ Ajouter) avant de valider.");
-                return false;
+            // 1. Récupérer le nom du client saisi dans l'input
+            const inputClient = document.getElementById('vente-nom-client');
+            const nomClient = (inputClient && inputClient.value.trim() !== "") 
+                ? inputClient.value.trim() 
+                : "Client Comptant";
+
+            // 2. Récupérer le mode de paiement
+            const inputPaiement = document.getElementById('vente-mode-paiement');
+            const modePaiement = inputPaiement ? inputPaiement.value : "Espèces";
+
+            // 3. Mettre à jour les textes dans la modale de facture avant de l'afficher
+            const elementNomModal = document.getElementById('modal-client-nom'); // Adaptez l'ID si différent dans votre modale
+            const elementPaiementModal = document.getElementById('modal-mode-paiement');
+
+            if (elementNomModal) elementNomModal.innerText = nomClient;
+            if (elementPaiementModal) elementPaiementModal.innerText = modePaiement;
+
+            // 4. Mettre à jour le champ caché JSON pour l'envoi vers Flask/Supabase
+            const inputPanierJson = document.getElementById('panier-json-input');
+            if (inputPanierJson) {
+                inputPanierJson.value = JSON.stringify(panierVente);
             }
 
-            const clientSaisi = document.getElementById('vente-nom-client').value.trim();
-            const paiementSaisi = document.getElementById('vente-mode-paiement').value;
-            const today = new Date().toISOString().split('T')[0];
-
-            // 2. En mode DÉMO : Affichage dynamique de la modale sans rechargement
-            if (isDemo) {
-                event.preventDefault();
-                const numFacture = "FAC-" + String(compteurFactureGlobal).padStart(4, '0');
-                compteurFactureGlobal++;
-
-                afficherFacture(numFacture, today, clientSaisi, panierVente, paiementSaisi);
-
-                panierVente = [];
-                afficherPanier();
-                document.getElementById('vente-nom-client').value = "";
-                return false;
-            }
-
-            // 3. En mode CONNECTÉ : Le formulaire se soumet normalement à Flask avec panier_json
-            document.getElementById('panier-json-input').value = JSON.stringify(panierVente);
+            // Soumettre le formulaire ou afficher la modale selon votre logique
             return true;
         }
     </script>
