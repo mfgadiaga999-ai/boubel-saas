@@ -554,8 +554,6 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 
 @app.route('/ajouter-vente', methods=['POST'])
 def ajouter_vente():
-    nom_client = request.form.get('nom_client', '').strip() or 'Client Comptant'
-    mode_paiement = request.form.get('mode_paiement', 'Espèces')
     panier_json = request.form.get('panier_json')
 
     if not panier_json:
@@ -568,47 +566,57 @@ def ajouter_vente():
             flash("Le panier est vide.", "danger")
             return redirect(url_for('index'))
 
-        # Traitement pour chaque article du panier avec Supabase
+        # Récupération de l'ID de la quincaillerie depuis la session (par défaut 1 si non spécifié)
+        quincaillerie_id = session.get('quincaillerie_id', 1) 
+        vendu_par_user = session.get('nom_utilisateur', 'Gérant')
+        date_du_jour = date.today().isoformat()  # Format YYYY-MM-DD pour la colonne date_vente
+
         for item in panier:
             nom_produit = item.get('nom')
-            quantite = int(item.get('qte', 0))
+            quantite_vendue = int(item.get('qte', 0))
             prix_unitaire = float(item.get('prix', 0))
 
-            # 1. Vérifier l'existence et le stock de l'article dans Supabase
-            response = supabase.table('produits').select('*').eq('nom_affichage', nom_produit).execute()
-            
+            # 1. Recherche du produit dans la table 'action'
+            response = supabase.table('action') \
+                .select('*') \
+                .eq('nom', nom_produit) \
+                .eq('quincaillerie_id', quincaillerie_id) \
+                .execute()
+
             if not response.data:
                 flash(f"Article inexistant : {nom_produit}", "danger")
                 return redirect(url_for('index'))
-            
+
             produit = response.data[0]
-            nouveau_stock = produit['stock_total'] - quantite
+            nouveau_stock = produit['quantite'] - quantite_vendue
 
             if nouveau_stock < 0:
                 flash(f"Stock insuffisant pour {nom_produit}.", "danger")
                 return redirect(url_for('index'))
 
-            # 2. Mettre à jour le stock dans Supabase
-            supabase.table('produits').update({'stock_total': nouveau_stock}).eq('id', produit['id']).execute()
+            # 2. Mise à jour de la quantité dans la table 'action'
+            supabase.table('action') \
+                .update({'quantite': nouveau_stock}) \
+                .eq('identifiant', produit['identifiant']) \
+                .execute()
 
-            # 3. Enregistrer la vente dans la table des ventes
+            # 3. Insertion dans la table 'ventes' (strictement alignée sur le schéma SQL)
             nouvelle_vente = {
+                'quincaillerie_id': quincaillerie_id,
                 'nom_produit': nom_produit,
-                'quantite_vendue': quantite,
+                'quantite_vendue': quantite_vendue,
                 'prix_vente': prix_unitaire,
-                'nom_client': nom_client,
-                'mode_paiement': mode_paiement,
-                'vendu_par': session.get('nom_utilisateur', 'Gérant')
+                'date_vente': date_du_jour,
+                'vendu_par': vendu_par_user
             }
+            
             supabase.table('ventes').insert(nouvelle_vente).execute()
 
         flash("Vente enregistrée avec succès !", "success")
         return redirect(url_for('index'))
 
     except Exception as e:
-        # L'affichage du print permettra de lire l'erreur exacte dans les logs Vercel
-        print(f"Erreur 500 détaillée : {str(e)}") 
-        flash("Erreur interne lors de l'enregistrement de la vente.", "danger")
+        flash(f"Erreur d'enregistrement : {str(e)}", "danger")
         return redirect(url_for('index'))
 
 @app.route('/supprimer-vente/<int:id>')
