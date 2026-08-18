@@ -564,6 +564,9 @@
                                 <input type="hidden" name="panier_json" id="panier-json-input">
 
                                 <table class="table table-sm table-bordered align-middle mb-2 text-center" style="font-size: 0.85rem;">
+                                    <style>
+                                        body.dark-mode .table { color: #fff !important; }
+                                    </style>
                                     <thead class="table-secondary">
                                         <tr>
                                             <th class="text-start">Article</th>
@@ -1402,28 +1405,20 @@
         }
 
         function enregistrerVente(event) {
-            // 1. Récupérer le nom du client saisi dans l'input
-            const inputClient = document.getElementById('nom_client');
-            const nomClient = (inputClient && inputClient.value.trim() !== "") 
-                ? inputClient.value.trim() 
-                : "Client Comptant";
+            if (!panierVente || panierVente.length === 0) {
+                event.preventDefault(); // Empêche l'envoi si le panier est vide
+                alert("Le panier est vide ! Veuillez ajouter au moins un produit.");
+                return false;
+            }
 
-            // 2. Récupérer le mode de paiement
-            const inputPaiement = document.getElementById('vente-mode-paiement');
-            const modePaiement = inputPaiement ? inputPaiement.value : "Espèces";
-
-            // 3. Mettre à jour les textes de la facture
-            const dateAujourdhui = new Date().toISOString().split('T')[0];
-            const numFacture = "FAC-" + String(compteurFactureGlobal++).padStart(4, '0');
-
-            // Mettre à jour le champ caché JSON
+            // 1. Remplir le champ JSON caché
             const inputPanierJson = document.getElementById('panier-json-input');
             if (inputPanierJson) {
                 inputPanierJson.value = JSON.stringify(panierVente);
             }
 
-            // Afficher la facture
-            afficherFacture(numFacture, dateAujourdhui, nomClient, panierVente, modePaiement);
+            // Le formulaire va maintenant se soumettre naturellement à /ajouter-vente 
+            // et Flask enregistrera nom_client et mode_paiement dans Supabase !
         }
 
         function afficherFacture(numero, date, client, items, paiement) {
