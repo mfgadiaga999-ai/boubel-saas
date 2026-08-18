@@ -530,7 +530,7 @@
                                 <div class="row g-2 mb-2">
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold" data-i18n="lbl_nom_client">Nom du Client</label>
-                                        <input type="text" id="nom_client_input" name="nom_client" class="form-control" placeholder="ex: Moussa Diallo (Vide = Client Comptant)">
+                                        <input type="text" id="nom_client" name="nom_client" class="form-control" placeholder="ex: Moussa Diallo">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold" data-i18n="lbl_mode_paiement">Mode de Paiement</label>
@@ -1387,18 +1387,35 @@
             if (select) select.value = langueSauvegardee;
             changerLangue(langueSauvegardee);
 
-            // Gestionnaire d'événement pour l'affichage de la facture
+           // Gestionnaire d'événement pour l'affichage de la facture
             document.body.addEventListener('click', function(e) {
                 const btn = e.target.closest('.btn-afficher-facture');
                 if (btn) {
                     const numero = btn.getAttribute('data-numero');
                     const date = btn.getAttribute('data-date');
-                    const client = btn.getAttribute('data-client');
+                    
+                    // 1. Récupérer en priorité le nom écrit dans le champ texte
+                    const inputClient = document.getElementById('nom_client') 
+                        || document.querySelector('input[placeholder*="Moussa Diallo"]') 
+                        || document.querySelector('input[name="nom_client"]');
+                        
+                    const clientSaisi = inputClient ? inputClient.value.trim() : "";
+                    
+                    // Si un nom a été tapé, on l'utilise ; sinon on prend data-client
+                    const client = (clientSaisi !== "") ? clientSaisi : btn.getAttribute('data-client');
+
+                    // 2. Récupérer le mode de paiement sélectionné
+                    const selectPaiement = document.getElementById('mode_paiement') 
+                        || document.querySelector('select[name="mode_paiement"]');
+                        
+                    const paiementChoisi = selectPaiement ? selectPaiement.value : "";
+                    const paiement = (paiementChoisi !== "") ? paiementChoisi : btn.getAttribute('data-paiement');
+
                     const produit = btn.getAttribute('data-produit');
                     const quantite = parseFloat(btn.getAttribute('data-quantite')) || 0;
                     const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
-                    const paiement = btn.getAttribute('data-paiement');
 
+                    // 3. Appel de la facture avec les bonnes données dynamiques
                     afficherFacture(numero, date, client, [{ nom: produit, qte: quantite, prix: prix }], paiement);
                 }
             });
@@ -1424,6 +1441,21 @@
                 }
             }
         }
+
+            // Fonction de validation de vente :
+            function validerVente() {
+                // 1. RÉCUPÉRATION DU NOM DU CLIENT DANS L'INPUT HTML
+                const inputElement = document.getElementById('nom_client');
+                const nomDuClient = inputElement ? inputElement.value.trim() : "";
+
+                // 2. RÉCUPÉRATION DES AUTRES DONNÉES
+                const modePaiement = document.getElementById('mode_paiement') ? document.getElementById('mode_paiement').value : "Espèces";
+                const numFacture = "FAC-" + String(Math.floor(Math.random() * 1000)).padStart(4, '0');
+                const dateAujourdhui = new Date().toISOString().split('T')[0];
+
+                // 3. APPEL DE LA FONCTION EN PASSANT 'nomDuClient'
+                afficherFacture(numFacture, dateAujourdhui, nomDuClient, panierVente, modePaiement);
+            }
 
             function afficherFacture(numero, date, client, items, paiement) {
             // 1. Mettre à jour le numéro et la date
