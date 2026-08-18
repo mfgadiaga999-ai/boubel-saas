@@ -70,6 +70,43 @@ def fetch_quincaillerie_stock(quincaillerie_id: str) -> str:
         return "Erreur lors de l'extraction des données du stock."
 
 
+def fetch_quincaillerie_ventes_jour(quincaillerie_id: str) -> str:
+    """Récupère les ventes effectuées aujourd'hui."""
+    try:
+        today = date.today().isoformat()
+        res = supabase.table('ventes') \
+            .select('produit_nom, quantite, prix_total, created_at') \
+            .eq('quincaillerie_id', quincaillerie_id) \
+            .gte('created_at', today) \
+            .execute()
+        
+        if not res.data:
+            return "Aucune vente enregistrée aujourd'hui."
+            
+        lignes = [f"- {v['quantite']}x {v['produit_nom']} ({v['prix_total']} FCFA)" for v in res.data]
+        return "\n".join(lignes)
+    except Exception as e:
+        return f"Erreur chargement ventes: {str(e)}"
+
+
+def fetch_quincaillerie_credits(quincaillerie_id: str) -> str:
+    """Récupère les factures impayées et crédits clients."""
+    try:
+        res = supabase.table('factures') \
+            .select('client_nom, montant_restant, statut, created_at') \
+            .eq('quincaillerie_id', quincaillerie_id) \
+            .gt('montant_restant', 0) \
+            .execute()
+            
+        if not res.data:
+            return "Aucun crédit ou dette client en cours."
+            
+        lignes = [f"- Client: {f['client_nom']} | Reste à payer: {f['montant_restant']} FCFA" for f in res.data]
+        return "\n".join(lignes)
+    except Exception as e:
+        return f"Erreur chargement crédits: {str(e)}"
+
+
 @app.route('/demo')
 def mode_demo():
     info_quincaillerie = {
@@ -716,13 +753,21 @@ def chatbot():
         nom_user = session.get('nom_utilisateur', 'Gérant')
 
         contexte_stock = fetch_quincaillerie_stock(str(q_id))
+        contexte_ventes = fetch_quincaillerie_ventes_jour(str(q_id))
+        contexte_credits = fetch_quincaillerie_credits(str(q_id))
 
         system_prompt = f"""
-Vous êtes l'assistant intelligent IA de gestion pour le SaaS de quincaillerie Boubel.
+Vous êtes l'assistant intelligent IA de gestion pour le SaaS de quincaillerie.
 Utilisateur connecté : {nom_user} (ID Quincaillerie : {q_id})
 
 ÉTAT DU STOCK RÉEL DE LA QUINCAILLERIE (SUPABASE) :
 {contexte_stock}
+
+VENTES EFFECTUÉES AUJOURD'HUI :
+{contexte_ventes}
+
+CRÉDITS ET FACTURES IMPAYÉES CLIENTS :
+{contexte_credits}
 
 CONSIGNES STRICTES :
 1. DÉTECTION DE LA LANGUE : Répondez TOUJOURS dans la langue utilisée par l'utilisateur.

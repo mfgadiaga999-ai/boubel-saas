@@ -346,6 +346,25 @@
                 margin: 10mm;
             }
         }
+
+        .btn-micro {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .btn-micro:hover {
+            background-color: #e2e8f0;
+        }
+
+        .btn-micro:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -877,6 +896,10 @@
             <div class="card-footer bg-white border-top p-2">
                 <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
                     <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Posez une question..." required autocomplete="off">
+                    <!-- 🎤 Le bouton Micro à ajouter ici -->
+                    <button type="button" onclick="demarrerSaisieVocale()" class="btn-micro" title="Parler au micro">
+                        🎤
+                    </button>
                     <button type="submit" class="btn btn-primary btn-sm px-3">
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -886,6 +909,44 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // --- RECONNAISSANCE VOCALE (Voice-to-Text) ---
+        let recognition = null;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false; // S'arrête dès que la personne finit de parler
+            recognition.interimResults = false;
+            recognition.lang = 'fr-FR'; // Langue d'écoute
+
+            recognition.onresult = (event) => {
+                const texteVocal = event.results[0][0].transcript;
+                
+                // On remplit le champ input
+                const inputField = document.getElementById('chatbot-input');
+                if (inputField) {
+                    inputField.value = texteVocal;
+                }
+                
+                // Déclenche l'envoi automatique si la fonction existe dans votre code
+                if (typeof envoyerMessageChatbot === 'function') {
+                    envoyerMessageChatbot(texteVocal);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Erreur de reconnaissance vocale :", event.error);
+            };
+        }
+
+        // Fonction déclenchée par le bouton 🎤
+        function demarrerSaisieVocale() {
+            if (recognition) {
+                recognition.start();
+            } else {
+                alert("La reconnaissance vocale n'est pas supportée sur ce navigateur.");
+            }
+        }
         // --- LOGIQUE GESTION MULTI-PRODUITS (PANIER) ---
         let panierVente = [];
 
