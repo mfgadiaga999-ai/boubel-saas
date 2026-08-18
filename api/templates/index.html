@@ -1350,19 +1350,34 @@
             if (select) select.value = langueSauvegardee;
             changerLangue(langueSauvegardee);
 
-            // Gestionnaire d'événement pour l'affichage de la facture depuis les tableaux d'historique
+            // Écouteur d'événement au clic sur le bouton Imprimer / Voir Facture
             document.body.addEventListener('click', function(e) {
                 const btn = e.target.closest('.btn-afficher-facture');
                 if (btn) {
                     const numero = btn.getAttribute('data-numero');
                     const date = btn.getAttribute('data-date');
-                    const client = btn.getAttribute('data-client');
-                    const produit = btn.getAttribute('data-produit');
-                    const quantite = parseFloat(btn.getAttribute('data-quantite')) || 0;
-                    const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
-                    const paiement = btn.getAttribute('data-paiement');
+                    
+                    // Récupérer le nom du client depuis l'attribut de l'historique
+                    let client = btn.getAttribute('data-client');
+                    
+                    // Si le bouton n'a pas de nom mais qu'un nom est saisi dans le champ de vente en cours
+                    const inputClient = document.getElementById('nom_client');
+                    if ((!client || client === "Client Comptant") && inputClient && inputClient.value.trim() !== "") {
+                        client = inputClient.value.trim();
+                    }
 
-                    afficherFacture(numero, date, client, [{ nom: produit, qte: quantite, prix: prix }], paiement);
+                    const paiement = btn.getAttribute('data-paiement') || 'Espèces';
+                    
+                    // Récupérer les données de l'article rattaché au bouton
+                    const produit = btn.getAttribute('data-produit');
+                    const quantite = parseInt(btn.getAttribute('data-quantite')) || 1;
+                    const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
+
+                    const itemsFacture = [
+                        { nom: produit, qte: quantite, prix: prix }
+                    ];
+
+                    afficherFacture(numero, date, client, itemsFacture, paiement);
                 }
             });
         });
@@ -1387,9 +1402,9 @@
         }
 
         function enregistrerVente(event) {
-            // 1. Récupérer le nom du client saisi dans l'input (ID: nom_client)
+            // 1. Récupérer le nom du client saisi dans l'input
             const inputClient = document.getElementById('nom_client');
-            const nomDuClient = (inputClient && inputClient.value.trim() !== "") 
+            const nomClient = (inputClient && inputClient.value.trim() !== "") 
                 ? inputClient.value.trim() 
                 : "Client Comptant";
 
@@ -1397,12 +1412,18 @@
             const inputPaiement = document.getElementById('vente-mode-paiement');
             const modePaiement = inputPaiement ? inputPaiement.value : "Espèces";
 
-            // 3. Générer le numéro de facture et la date du jour
-            const numFacture = "FAC-" + String(compteurFactureGlobal++).padStart(4, '0');
+            // 3. Mettre à jour les textes de la facture
             const dateAujourdhui = new Date().toISOString().split('T')[0];
+            const numFacture = "FAC-" + String(compteurFactureGlobal++).padStart(4, '0');
 
-            // 4. APPEL DE LA FONCTION EN PASSANT 'nomDuClient'
-            afficherFacture(numFacture, dateAujourdhui, nomDuClient, panierVente, modePaiement);
+            // Mettre à jour le champ caché JSON
+            const inputPanierJson = document.getElementById('panier-json-input');
+            if (inputPanierJson) {
+                inputPanierJson.value = JSON.stringify(panierVente);
+            }
+
+            // Afficher la facture
+            afficherFacture(numFacture, dateAujourdhui, nomClient, panierVente, modePaiement);
         }
 
         function afficherFacture(numero, date, client, items, paiement) {

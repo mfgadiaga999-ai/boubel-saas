@@ -552,6 +552,15 @@ def ajouter_vente():
     supabase = get_supabase_client()
     panier_json = request.form.get('panier_json')
 
+    # 1. Récupération du nom du client et du mode de paiement depuis le formulaire HTML
+    nom_client = request.form.get('nom_client', '').strip()
+    if not nom_client:
+        nom_client = "Client Comptant"
+
+    mode_paiement = request.form.get('mode_paiement', '').strip()
+    if not mode_paiement:
+        mode_paiement = "Espèces"
+
     if not panier_json:
         flash("Erreur : Aucun panier reçu.", "danger")
         return redirect(url_for('index'))
@@ -571,7 +580,7 @@ def ajouter_vente():
             quantite_vendue = int(item.get('qte', 0))
             prix_unitaire = float(item.get('prix', 0))
 
-            # 1. Recherche du produit dans la table 'stock'
+            # Recherche du produit dans la table 'stock'
             response = supabase.table('stock') \
                 .select('*') \
                 .eq('nom', nom_produit) \
@@ -589,20 +598,22 @@ def ajouter_vente():
                 flash(f"Stock insuffisant pour {nom_produit}.", "danger")
                 return redirect(url_for('index'))
 
-            # 2. Mise à jour de la quantité dans la table 'stock' avec la colonne 'id'
+            # Mise à jour de la quantité dans la table 'stock'
             supabase.table('stock') \
                 .update({'quantite': nouveau_stock}) \
                 .eq('id', produit['id']) \
                 .execute()
 
-            # 3. Insertion dans la table 'ventes'
+            # Insertion dans la table 'ventes' AVEC nom_client et mode_paiement
             nouvelle_vente = {
                 'quincaillerie_id': quincaillerie_id,
                 'nom_produit': nom_produit,
                 'quantite_vendue': quantite_vendue,
                 'prix_vente': prix_unitaire,
                 'date_vente': date_du_jour,
-                'vendu_par': vendu_par_user
+                'vendu_par': vendu_par_user,
+                'nom_client': nom_client,          # Enregistré en base
+                'mode_paiement': mode_paiement      # Enregistré en base
             }
             
             supabase.table('ventes').insert(nouvelle_vente).execute()
