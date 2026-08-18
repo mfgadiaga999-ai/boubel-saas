@@ -298,19 +298,16 @@
         }
 
         @media print {
-            /* 1. Masquer tout le contenu de la page / Dashboard */
             body * {
                 visibility: hidden !important;
                 height: 0 !important;
             }
 
-            /* 2. Afficher la modale et son contenu uniquement */
             #modalFacture, #modalFacture * {
                 visibility: visible !important;
                 height: auto !important;
             }
 
-            /* 3. Neutraliser le positionnement de la modale Bootstrap pour l'impression */
             .modal {
                 position: absolute !important;
                 left: 0 !important;
@@ -333,12 +330,10 @@
                 box-shadow: none !important;
             }
 
-            /* 4. Masquer l'arrière-plan sombre Bootstrap et les boutons (Fermer/Imprimer) */
             .modal-backdrop, .modal-footer, .btn, .btn-close {
                 display: none !important;
             }
 
-            /* 5. Empêcher la création de pages supplémentaires */
             html, body {
                 height: 100% !important;
                 overflow: hidden !important;
@@ -564,9 +559,6 @@
                                 <input type="hidden" name="panier_json" id="panier-json-input">
 
                                 <table class="table table-sm table-bordered align-middle mb-2 text-center" style="font-size: 0.85rem;">
-                                    <style>
-                                        body.dark-mode .table { color: #fff !important; }
-                                    </style>
                                     <thead class="table-secondary">
                                         <tr>
                                             <th class="text-start">Article</th>
@@ -677,14 +669,7 @@
                                                 <td class="fw-bold text-success" data-label="Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Vendu par"><span class="badge bg-light text-dark border">{{ v.vendu_par }}</span></td>
                                                 <td class="text-center" data-label="Action">
-                                                    <button class="btn btn-outline-primary btn-sm me-1 btn-afficher-facture" 
-                                                            data-numero="FAC-{{ '%04d' % loop.index }}" 
-                                                            data-date="{{ v.date_vente }}" 
-                                                            data-client="{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}" 
-                                                            data-produit="{{ v.nom_produit }}" 
-                                                            data-quantite="{{ v.quantite_vendue }}" 
-                                                            data-prix="{{ v.prix_vente | default(0, true) }}" 
-                                                            data-paiement="{{ v.mode_paiement | default('Espèces', true) }}">
+                                                    <button class="btn btn-outline-primary btn-sm me-1 btn-afficher-facture" data-numero="FAC-{{ '%04d' % loop.index }}" data-date="{{ v.date_vente }}" data-client="{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}" data-produit="{{ v.nom_produit }}" data-quantite="{{ v.quantite_vendue }}" data-prix="{{ v.prix_vente | default(0, true) }}" data-paiement="{{ v.mode_paiement | default('Espèces', true) }}">
                                                         <i class="fa-solid fa-print"></i>
                                                     </button>
                                                     <a href="/supprimer-vente/{{ v.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette vente ? Le stock sera restitué.');"><i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_annuler">Annuler</span></a>
@@ -707,31 +692,24 @@
                                             <th data-i18n="th_numero_facture">N° Facture</th>
                                             <th data-i18n="th_date">Date</th>
                                             <th data-i18n="th_nom_client">Client</th>
-                                            <th data-i18n="th_produit">Désignation</th>
+                                            <th>Désignation</th>
                                             <th data-i18n="th_total">Montant Total</th>
                                             <th data-i18n="th_mode_paiement">Paiement</th>
-                                            <th class="text-center" data-i18n="th_action">Actions Facture</th>
+                                            <th class="text-center">Actions Facture</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% if ventes %}
                                             {% for v in ventes %}
                                             <tr>
-                                                <td class="fw-bold text-primary" data-label="N° Facture">FAC-{{ "%04d" % loop.index }}</td>
+                                                <td class="fw-bold">FAC-{{ "%04d" % loop.index }}</td>
                                                 <td class="small" data-label="Date">{{ v.date_vente }}</td>
                                                 <td data-label="Client"><b>{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}</b></td>
                                                 <td data-label="Désignation">{{ v.nom_produit }} (x{{ v.quantite_vendue }})</td>
                                                 <td class="fw-bold text-success" data-label="Montant Total">{{ "{:,.0f}".format((v.prix_vente or 0) * (v.quantite_vendue or 0)) }} FCFA</td>
                                                 <td data-label="Paiement"><span class="badge bg-info text-dark"><i class="fa-solid fa-wallet me-1"></i> {{ v.mode_paiement if v.mode_paiement else 'Espèces' }}</span></td>
                                                 <td class="text-center" data-label="Actions Facture">
-                                                    <button class="btn btn-sm btn-primary fw-bold btn-afficher-facture" 
-                                                            data-numero="FAC-{{ '%04d' % loop.index }}" 
-                                                            data-date="{{ v.date_vente }}" 
-                                                            data-client="{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}" 
-                                                            data-produit="{{ v.nom_produit }}" 
-                                                            data-quantite="{{ v.quantite_vendue }}" 
-                                                            data-prix="{{ v.prix_vente | default(0, true) }}" 
-                                                            data-paiement="{{ v.mode_paiement | default('Espèces', true) }}">
+                                                    <button class="btn btn-sm btn-primary fw-bold btn-afficher-facture" data-numero="FAC-{{ '%04d' % loop.index }}" data-date="{{ v.date_vente }}" data-client="{{ v.nom_client if (v.nom_client and v.nom_client.strip()) else 'Client Comptant' }}" data-produit="{{ v.nom_produit }}" data-quantite="{{ v.quantite_vendue }}" data-prix="{{ v.prix_vente | default(0, true) }}" data-paiement="{{ v.mode_paiement | default('Espèces', true) }}">
                                                         <i class="fa-solid fa-print me-1"></i> <span data-i18n="btn_imprimer">Imprimer Reçu</span>
                                                     </button>
                                                 </td>
@@ -760,58 +738,55 @@
                     <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-invoice me-2"></i> Facture Client</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-4" id="section-a-imprimer">
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
                         <div>
-                            <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-store me-2"></i> {{ info_quincaillerie.nom_entreprise if info_quincaillerie else 'MA QUINCAILLERIE' }}</h4>
-                            <p class="text-muted small mb-0">{{ info_quincaillerie.adresse if info_quincaillerie else 'Sénégal' }} | Tél: {{ info_quincaillerie.telephone if info_quincaillerie else '+221 77 000 00 00' }}</p>
+                            <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-store me-2"></i>{{ info_quincaillerie.nom_entreprise if info_quincaillerie else 'Ma Quincaillerie' }}</h4>
+                            <p class="text-muted small mb-0">{{ info_quincaillerie.adresse if info_quincaillerie else 'Dakar, Sénégal' }} | Tél: {{ info_quincaillerie.telephone if info_quincaillerie else '+221 77 000 00 00' }}</p>
                         </div>
                         <div class="text-end">
-                            <span class="badge bg-dark fs-6" id="fac-num">FAC-0000</span>
-                            <div class="small text-muted mt-1" id="fac-date">Date: --/--/----</div>
+                            <h5 class="fw-bold text-dark mb-0" id="fac-num">FAC-0001</h5>
+                            <span class="badge bg-light text-dark border" id="fac-date">Date: --/--/----</span>
                         </div>
                     </div>
 
-                    <div class="row mb-3 bg-light p-2 rounded mx-0">
+                    <div class="row mb-4">
                         <div class="col-6">
-                            <small class="text-muted text-uppercase fw-bold">Client :</small>
-                            <div class="fw-bold fs-6 text-dark" id="fac-client">Client Comptant</div>
+                            <h6 class="text-uppercase text-muted small fw-bold mb-1">Facturé à :</h6>
+                            <h5 class="fw-bold text-dark mb-0" id="fac-client">Client Comptant</h5>
                         </div>
                         <div class="col-6 text-end">
-                            <small class="text-muted text-uppercase fw-bold">Mode de Paiement :</small>
-                            <div class="fw-bold text-success" id="fac-mode">Espèces</div>
+                            <h6 class="text-uppercase text-muted small fw-bold mb-1">Mode de Paiement :</h6>
+                            <span class="badge bg-success fs-6" id="fac-mode">Espèces</span>
                         </div>
                     </div>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive mb-3">
                         <table class="table table-bordered align-middle">
-                            <thead class="table-secondary">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Désignation Article</th>
-                                    <th class="text-center" style="width: 100px;">Qté</th>
-                                    <th class="text-end" style="width: 130px;">Prix Unit.</th>
-                                    <th class="text-end" style="width: 150px;">Total</th>
+                                    <th class="text-center">Quantité</th>
+                                    <th class="text-end">Prix Unitaire</th>
+                                    <th class="text-end">Total</th>
                                 </tr>
                             </thead>
                             <tbody id="fac-table-items">
                                 </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="3" class="text-end fs-5 fw-bold">TOTAL À PAYER :</th>
-                                    <th class="text-end fs-5 fw-bold text-primary" id="fac-grand-total">0 FCFA</th>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
 
-                    <div class="text-center text-muted small mt-4 pt-2 border-top">
-                        <p class="mb-0">Merci de votre confiance ! Les marchandises vendues ne sont ni reprises ni échangées.</p>
+                    <div class="d-flex justify-content-end align-items-center">
+                        <div class="text-end">
+                            <span class="text-muted small fw-bold text-uppercase d-block">Montant Total à Payer :</span>
+                            <h3 class="fw-bold text-primary mb-0" id="fac-grand-total">0 FCFA</h3>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                    <button type="button" class="btn btn-success fw-bold" onclick="window.print()">
-                        <i class="fa-solid fa-print me-1"></i> Imprimer la Facture
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="window.print()">
+                        <i class="fa-solid fa-print me-1"></i> Imprimer / Télécharger PDF
                     </button>
                 </div>
             </div>
@@ -819,7 +794,6 @@
     </div>
 
     {% else %}
-
     <div class="container d-flex justify-content-center align-items-center vh-100">
         <div class="card border-0 shadow-lg p-4" style="width: 100%; max-width: 400px;">
             <div class="text-center mb-4">
@@ -847,7 +821,6 @@
                         <input type="text" name="identifiant" class="form-control" required placeholder="Votre identifiant">
                     </div>
                 </div>
-
                 <div class="mb-3">
                     <label class="form-label small fw-bold" data-i18n="mot_de_passe">Mot de passe</label>
                     <div class="input-group">
@@ -855,7 +828,6 @@
                         <input type="password" name="mot_de_passe" class="form-control" required placeholder="••••••••">
                     </div>
                 </div>
-
                 <button type="submit" class="btn btn-primary w-100 fw-bold py-2 mt-2">
                     <i class="fa-solid fa-right-to-bracket me-1"></i> <span data-i18n="btn_se_connecter">Se Connecter</span>
                 </button>
@@ -864,47 +836,42 @@
             <div class="text-center mt-4 pt-3 border-top">
                 <p class="text-muted small mb-2" data-i18n="question_decouvrir">Vous souhaitez découvrir la plateforme ?</p>
                 <a href="/demo" class="btn btn-outline-success rounded-pill w-100 fw-bold py-2">
-                    <i class="fas fa-play-circle me-1"></i> <span data-i18n="btn_tester_demo">Tester la Démo Gratuite</span>
+                    <i class="fas fa-rocket me-1"></i> <span data-i18n="btn_tester_demo">Tester la Démo Gratuite</span>
                 </a>
             </div>
         </div>
     </div>
-
     {% endif %}
 
-    <div id="chatbot-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1050;">
-        <button id="chatbot-toggle-btn" class="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px;" onclick="toggleChatbot()">
-            <i class="fas fa-robot"></i>
-        </button>
+    <button id="chatbot-toggle-btn" class="btn btn-primary rounded-circle shadow-lg position-fixed bottom-0 end-0 m-4 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px; z-index: 1050;" onclick="toggleChatbot()">
+        <i class="fas fa-robot"></i>
+    </button>
 
-        <div id="chatbot-window" class="card shadow-lg border-0 d-none" style="position: absolute; bottom: 80px; right: 0; width: 360px; height: 480px; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column;">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fas fa-robot fs-4"></i>
-                    <div>
-                        <h6 class="mb-0 fw-bold" data-i18n="cb_nom">Dimbalikaw Quincaillerie 🔊</h6>
-                        <small class="text-white-50" style="font-size: 11px;" data-i18n="cb_sous_titre">Mangi fi ngir wax ak dimbali leen</small>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" onclick="toggleChatbot()"></button>
-            </div>
-            
-            <div id="chatbot-messages" class="card-body p-3 overflow-auto bg-light" style="flex: 1;">
-                <div class="d-flex mb-3">
-                    <div class="bg-white p-2 rounded shadow-sm border text-dark small me-auto" style="max-width: 80%;" data-i18n="cb_welcome">
-                        👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?
-                    </div>
+    <div id="chatbot-window" class="card shadow-lg position-fixed bottom-0 end-0 mb-5 me-4 d-none" style="width: 350px; height: 450px; z-index: 1050; border-radius: 15px; overflow: hidden;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-robot fa-lg"></i>
+                <div>
+                    <h6 class="mb-0 fw-bold" id="cb-nom" data-i18n="cb_nom">Dimbalikaw Quincaillerie 🔊</h6>
+                    <small class="text-light" style="font-size: 11px;" id="cb-sous-titre" data-i18n="cb_sous_titre">Mangi fi ngir wax ak dimbali leen</small>
                 </div>
             </div>
-
-            <div class="card-footer bg-white border-top p-2">
-                <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
-                    <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Posez une question..." required autocomplete="off">
-                    <button type="submit" class="btn btn-primary btn-sm px-3">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </form>
+            <button type="button" class="btn-close btn-close-white" onclick="toggleChatbot()"></button>
+        </div>
+        <div class="card-body p-3 overflow-auto" id="chatbot-messages" style="background-color: #f8f9fa;">
+            <div class="d-flex flex-column align-items-start mb-2">
+                <div class="p-2 px-3 rounded-3 bg-white text-dark border shadow-sm small" style="max-width: 85%; border-bottom-left-radius: 0 !important;" id="cb-welcome" data-i18n="cb_welcome">
+                    👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?
+                </div>
             </div>
+        </div>
+        <div class="card-footer bg-white border-top p-2">
+            <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
+                <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Posez une question..." required autocomplete="off">
+                <button type="submit" class="btn btn-primary btn-sm px-3">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
         </div>
     </div>
 
@@ -912,7 +879,6 @@
     <script>
         // --- LOGIQUE GESTION MULTI-PRODUITS (PANIER) ---
         let panierVente = [];
-        let compteurFactureGlobal = 1;
 
         function ajouterAuPanier() {
             const select = document.getElementById('select-article-panier');
@@ -962,18 +928,21 @@
                 return;
             }
 
-            const formatPrix = (val) => new Intl.NumberFormat('fr-FR').format(val);
+            let totalGeneral = 0;
+            const formatPrix = (val) => new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
 
             panierVente.forEach((item, index) => {
                 const totalLigne = item.qte * item.prix;
+                totalGeneral += totalLigne;
+
                 tbody.innerHTML += `
                     <tr>
-                        <td class="text-start text-truncate" style="max-width: 120px;">${item.nom}</td>
+                        <td class="text-start fw-bold">${item.nom}</td>
                         <td>${item.qte}</td>
                         <td>${formatPrix(item.prix)}</td>
                         <td class="fw-bold text-success">${formatPrix(totalLigne)}</td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" onclick="supprimerDuPanier(${index})">
+                            <button type="button" class="btn btn-outline-danger btn-sm p-0 px-1" onclick="supprimerDuPanier(${index})">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </td>
@@ -981,444 +950,36 @@
                 `;
             });
 
+            // Mettre à jour le champ caché JSON
             document.getElementById('panier-json-input').value = JSON.stringify(panierVente);
         }
 
-        // Dictionnaires de traductions pour le multilingue
-        const dictionnaireTraductions = {
-            fr: {
-                connecte: "Connecté",
-                deconnexion: "Déconnexion",
-                banner_demo: "Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !",
-                btn_commander: "Commander Ma Boutique",
-                titre_dashboard: "Bienvenue sur votre Dashboard",
-                ca: "Chiffre d'Affaires",
-                valeur_stock: "Valeur Stock Immobilisé",
-                total_articles: "Total Articles Stock",
-                references: "références",
-                alertes: "Alertes Recommandation",
-                critiques: "critiques",
-                assistant_titre: "Assistant Intelligent de la Quincaillerie",
-                ajouter_produit_titre: "Ajouter / Réapprovisionner un Produit",
-                lbl_nom_article: "Nom de l'Article",
-                lbl_prix_unitaire: "Prix Unitaire (FCFA)",
-                lbl_quantite_ajoutee: "Quantité Ajoutée",
-                lbl_seuil_alerte: "Seuil d'Alerte Stock",
-                btn_ajouter: "Enregistrer en Stock",
-                enregistrer_vente_titre: "Enregistrer une Vente & Générer Facture",
-                lbl_selectionner_article: "Sélectionner un Article",
-                opt_choisir_produit: "-- Choisir un produit --",
-                lbl_quantite_vendue: "Quantité Vendue",
-                lbl_nom_client: "Nom du Client (Optionnel)",
-                lbl_mode_paiement: "Mode de Paiement",
-                opt_especes: "Espèces",
-                opt_cheque: "Chèque",
-                opt_virement: "Virement BTP",
-                btn_valider_vente: "Valider & Editer la Facture",
-                onglets_stock: "État du Stock",
-                onglets_ventes: "Historique des Ventes",
-                onglets_factures: "Factures & Reçus",
-                th_nom_produit: "Nom Produit",
-                th_prix_unitaire: "Prix Unitaire",
-                th_stock_restant: "Stock Restant",
-                th_statut: "Statut",
-                th_actions: "Actions",
-                st_alerte: "Alerte Seuil",
-                st_en_stock: "En Stock",
-                aucun_produit: "Aucun produit enregistré.",
-                th_date: "Date",
-                th_produit: "Produit",
-                th_quantite: "Quantité",
-                th_prix_vente: "Prix Vente",
-                th_total: "Total",
-                th_vendu_par: "Vendu par",
-                th_action: "Action",
-                btn_annuler: "Annuler",
-                aucune_vente: "Aucune vente enregistrée.",
-                th_numero_facture: "N° Facture",
-                th_nom_client: "Client",
-                th_mode_paiement: "Paiement",
-                btn_voir_facture: "Voir / Imprimer",
-                btn_imprimer: "Imprimer Reçu",
-                aucune_facture: "Aucune facture enregistrée pour le moment.",
-                connexion_titre: "Connexion SaaS",
-                connexion_sous_titre: "Espace Quincaillerie & Administration",
-                identifiant: "Identifiant",
-                mot_de_passe: "Mot de passe",
-                btn_se_connecter: "Se Connecter",
-                question_decouvrir: "Vous souhaitez découvrir la plateforme ?",
-                btn_tester_demo: "Tester la Démo Gratuite",
-                cb_nom: "Dimbalikaw Quincaillerie 🔊",
-                cb_sous_titre: "Mangi fi ngir wax ak dimbali leen",
-                cb_welcome: "👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?"
-            },
-            wo: {
-                connecte: "Mangi fi",
-                deconnexion: "Génn",
-                banner_demo: "Yanga gi tester en mode démonstration. Sa données réelles dinan sécurisé !",
-                btn_commander: "Commander Ma Boutique",
-                titre_dashboard: "Dalal ak jamm ci sa Tableau de bord",
-                ca: "Xalis bi nga jaay",
-                valeur_stock: "Njeundou stock bi fi nekk",
-                total_articles: "Limou Marchandise yi",
-                references: "royouwaay",
-                alertes: "Artou",
-                critiques: "jafe-jafe",
-                assistant_titre: "Dimbalikaw Intelligent bi",
-                ajouter_produit_titre: "Yokk marchandiise ci stock bi",
-                lbl_nom_article: "Turou marchandiise bi",
-                lbl_prix_unitaire: "Njeundou benn bi (FCFA)",
-                lbl_quantite_ajoutee: "Limou nga yokk",
-                lbl_seuil_alerte: "Limou artou stock",
-                btn_ajouter: "Denc ci stock bi",
-                enregistrer_vente_titre: "Bindu njaay té génné facture",
-                lbl_selectionner_article: "Tann marchandiise",
-                opt_choisir_produit: "-- Tannal marchandiise --",
-                lbl_quantite_vendue: "Limou nga jaay",
-                lbl_nom_client: "Turou client bi (So ko bëggee)",
-                lbl_mode_paiement: "Naka la fayee",
-                opt_especes: "Xalis bu tay",
-                opt_cheque: "Chèque",
-                opt_virement: "Virement BTP",
-                btn_valider_vente: "Dëggal té génné Facture bi",
-                onglets_stock: "Fi Stock bi tollu",
-                onglets_ventes: "Jaay-jaay yi passé",
-                onglets_factures: "Facture ak Reçu yi",
-                th_nom_produit: "Turou Produit bi",
-                th_prix_unitaire: "Njeundou benn bi",
-                th_stock_restant: "Limou des ci stock bi",
-                th_statut: "Statut",
-                th_actions: "Jëf yi",
-                st_alerte: "Artou Limu des",
-                st_en_stock: "Amon na ci stock",
-                aucun_produit: "Amul benn produit bu am ci stock.",
-                th_date: "Date bi",
-                th_produit: "Produit bi",
-                th_quantite: "Limu jaay",
-                th_prix_vente: "Njeundou jaay bi",
-                th_total: "Mbolem xalis bi",
-                th_vendu_par: "Kiko jaay",
-                th_action: "Jëf",
-                btn_annuler: "Fay ko / Annuler",
-                aucune_vente: "Amul benn njaay buñu bind.",
-                th_numero_facture: "N° Facture",
-                th_nom_client: "Client bi",
-                th_mode_paiement: "Manière d'am xalis",
-                btn_voir_facture: "Xool / Imprimer",
-                btn_imprimer: "Imprimer Reçu bi",
-                aucune_facture: "Amul benn facture bu am legui.",
-                connexion_titre: "Dugg ci SaaS bi",
-                connexion_sous_titre: "Barabu Quincaillerie ak Administration",
-                identifiant: "Identifiant bi",
-                mot_de_passe: "Mot de passe bi",
-                btn_se_connecter: "Dugg",
-                question_decouvrir: "Bëgg nga xam naka la système bi di doxé ?",
-                btn_tester_demo: "Testél Démo bi",
-                cb_nom: "Dimbalikaw Quincaillerie 🔊",
-                cb_sous_titre: "Mangi fi ngir wax ak dimbali leen",
-                cb_welcome: "👋 Nanga def ! Lu ma la mën a dimbali tay ?"
-            },
-            en: {
-                connecte: "Logged in",
-                deconnexion: "Logout",
-                banner_demo: "You are testing the demo interface. Your real data will be completely secure!",
-                btn_commander: "Order My Store",
-                titre_dashboard: "Welcome to your Dashboard",
-                ca: "Revenue / Turnover",
-                valeur_stock: "Total Stock Value",
-                total_articles: "Total Items in Stock",
-                references: "items",
-                alertes: "Stock Alerts",
-                critiques: "critical",
-                assistant_titre: "Smart Hardware Assistant",
-                ajouter_produit_titre: "Add / Restock a Product",
-                lbl_nom_article: "Item Name",
-                lbl_prix_unitaire: "Unit Price (FCFA)",
-                lbl_quantite_ajoutee: "Added Quantity",
-                lbl_seuil_alerte: "Stock Alert Threshold",
-                btn_ajouter: "Save to Stock",
-                enregistrer_vente_titre: "Record a Sale & Generate Invoice",
-                lbl_selectionner_article: "Select Item",
-                opt_choisir_produit: "-- Choose a product --",
-                lbl_quantite_vendue: "Sold Quantity",
-                lbl_nom_client: "Customer Name (Optional)",
-                lbl_mode_paiement: "Payment Method",
-                opt_especes: "Cash",
-                opt_cheque: "Check",
-                opt_virement: "Bank Transfer",
-                btn_valider_vente: "Confirm & Edit Invoice",
-                onglets_stock: "Stock Inventory",
-                onglets_ventes: "Sales History",
-                onglets_factures: "Invoices & Receipts",
-                th_nom_produit: "Product Name",
-                th_prix_unitaire: "Unit Price",
-                th_stock_restant: "Remaining Stock",
-                th_statut: "Status",
-                th_actions: "Actions",
-                st_alerte: "Low Stock Alert",
-                st_en_stock: "In Stock",
-                aucun_produit: "No products recorded.",
-                th_date: "Date",
-                th_produit: "Product",
-                th_quantite: "Quantity",
-                th_prix_vente: "Selling Price",
-                th_total: "Total",
-                th_vendu_par: "Sold by",
-                th_action: "Action",
-                btn_annuler: "Cancel",
-                aucune_vente: "No sales recorded.",
-                th_numero_facture: "Invoice N°",
-                th_nom_client: "Customer",
-                th_mode_paiement: "Payment",
-                btn_voir_facture: "View / Print",
-                btn_imprimer: "Print Receipt",
-                aucune_facture: "No invoices recorded yet.",
-                connexion_titre: "SaaS Login",
-                connexion_sous_titre: "Hardware Store & Admin Space",
-                identifiant: "Username",
-                mot_de_passe: "Password",
-                btn_se_connecter: "Login",
-                question_decouvrir: "Want to discover the platform?",
-                btn_tester_demo: "Try Free Demo",
-                cb_nom: "Hardware Assistant 🔊",
-                cb_sous_titre: "Here to assist and talk to you",
-                cb_welcome: "👋 Hello! How can I help you today?"
-            },
-            ar: {
-                connecte: "متصل",
-                deconnexion: "تسجيل الخروج",
-                banner_demo: "أنت تقوم بتجربة الواجهة في الوضع التجريبي. بياناتك الحقيقية ستكون آمنة تماماً!",
-                btn_commander: "طلب متجري",
-                titre_dashboard: "مرحباً بك في لوحة التحكم",
-                ca: "إجمالي المبيعات",
-                valeur_stock: "قيمة المخزون الإجمالية",
-                total_articles: "إجمالي المنتجات بالمخزن",
-                references: "منتجات",
-                alertes: "تنبيهات المخزون",
-                critiques: "حرجة",
-                assistant_titre: "المساعد الذكي لإدارة الخردوات",
-                ajouter_produit_titre: "إضافة / إعادة تزويد منتج",
-                lbl_nom_article: "اسم المنتج",
-                lbl_prix_unitaire: "سعر الوحدة (FCFA)",
-                lbl_quantite_ajoutee: "الكمية المضافة",
-                lbl_seuil_alerte: "حد تنبيه المخزون",
-                btn_ajouter: "حفظ في المخزون",
-                enregistrer_vente_titre: "تسجيل عملية بيع وإصدار فاتورة",
-                lbl_selectionner_article: "اختر المنتج",
-                opt_choisir_produit: "-- اختر منتجاً --",
-                lbl_quantite_vendue: "الكمية المباعة",
-                lbl_nom_client: "اسم العميل (اختياري)",
-                lbl_mode_paiement: "طريقة الدفع",
-                opt_especes: "نقداً",
-                opt_cheque: "شيك",
-                opt_virement: "تحويل بنكي",
-                btn_valider_vente: "تأكيد وإصدار الفاتورة",
-                onglets_stock: "حالة المخزون",
-                onglets_ventes: "سجل المبيعات",
-                onglets_factures: "الفواتير والإيصالات",
-                th_nom_produit: "اسم المنتج",
-                th_prix_unitaire: "سعر الوحدة",
-                th_stock_restant: "المخزون المتبقي",
-                th_statut: "الحالة",
-                th_actions: "الإجراءات",
-                st_alerte: "تنبيه انخفاض المخزون",
-                st_en_stock: "متوفر",
-                aucun_produit: "لا يوجد منتجات مسجلة.",
-                th_date: "التاريخ",
-                th_produit: "المنتج",
-                th_quantite: "الكمية",
-                th_prix_vente: "سعر البيع",
-                th_total: "المجموع",
-                th_vendu_par: "بواسطة",
-                th_action: "إجراء",
-                btn_annuler: "إلغاء",
-                aucune_vente: "لا يوجد مبيعات مسجلة.",
-                th_numero_facture: "رقم الفاتورة",
-                th_nom_client: "العميل",
-                th_mode_paiement: "الدفع",
-                btn_voir_facture: "عرض / طباعة",
-                btn_imprimer: "طباعة الإيصال",
-                aucune_facture: "لا توجد فواتير مسجلة حتى الآن.",
-                connexion_titre: "تسجيل الدخول",
-                connexion_sous_titre: "منصة إدارة الخردوات",
-                identifiant: "اسم المستخدم",
-                mot_de_passe: "كلمة المرور",
-                btn_se_connecter: "دخول",
-                question_decouvrir: "هل ترغب في اكتشاف المنصة؟",
-                btn_tester_demo: "تجربة النسخة التجريبية",
-                cb_nom: "مساعد الخردوات 🔊",
-                cb_sous_titre: "أنا هنا لمساعدتك والتحدث معك",
-                cb_welcome: "👋 مرحباً بك! كيف يمكنني مساعدتك اليوم؟"
-            },
-            es: {
-                connecte: "Conectado",
-                deconnexion: "Cerrar sesión",
-                banner_demo: "Está probando la interfaz en modo demostración. ¡Sus datos reales estarán totalmente seguros!",
-                btn_commander: "Ordenar Mi Tienda",
-                titre_dashboard: "Bienvenido a su Panel de Control",
-                ca: "Ingresos Totales",
-                valeur_stock: "Valor del Inventario",
-                total_articles: "Total de Artículos",
-                references: "referencias",
-                alertes: "Alertas de Stock",
-                critiques: "críticas",
-                assistant_titre: "Asistente Inteligente de Ferretería",
-                ajouter_produit_titre: "Añadir / Reabastecer Producto",
-                lbl_nom_article: "Nombre del Artículo",
-                lbl_prix_unitaire: "Precio Unitario (FCFA)",
-                lbl_quantite_ajoutee: "Cantidad Añadida",
-                lbl_seuil_alerte: "Umbral de Alerta de Stock",
-                btn_ajouter: "Guardar en Inventario",
-                enregistrer_vente_titre: "Registrar Venta y Generar Factura",
-                lbl_selectionner_article: "Seleccionar Artículo",
-                opt_choisir_produit: "-- Elija un producto --",
-                lbl_quantite_vendue: "Cantidad Vendida",
-                lbl_nom_client: "Nombre del Cliente (Opcional)",
-                lbl_mode_paiement: "Método de Pago",
-                opt_especes: "Efectivo",
-                opt_cheque: "Cheque",
-                opt_virement: "Transferencia",
-                btn_valider_vente: "Confirmar y Facturar",
-                onglets_stock: "Inventario de Stock",
-                onglets_ventes: "Historial de Ventas",
-                onglets_factures: "Facturas y Recibos",
-                th_nom_produit: "Nombre del Producto",
-                th_prix_unitaire: "Precio Unitario",
-                th_stock_restant: "Stock Restante",
-                th_statut: "Estado",
-                th_actions: "Acciones",
-                st_alerte: "Alerta de Stock Bajo",
-                st_en_stock: "Disponible",
-                aucun_produit: "No hay productos registrados.",
-                th_date: "Fecha",
-                th_produit: "Producto",
-                th_quantite: "Cantidad",
-                th_prix_vente: "Precio de Venta",
-                th_total: "Total",
-                th_vendu_par: "Vendido por",
-                th_action: "Acción",
-                btn_annuler: "Cancelar",
-                aucune_vente: "No hay ventas registradas.",
-                th_numero_facture: "N° Factura",
-                th_nom_client: "Cliente",
-                th_mode_paiement: "Pago",
-                btn_voir_facture: "Ver / Imprimir",
-                btn_imprimer: "Imprimir Recibo",
-                aucune_facture: "No hay facturas registradas aún.",
-                connexion_titre: "Iniciar Sesión",
-                connexion_sous_titre: "Espacio de Ferretería y Administración",
-                identifiant: "Usuario",
-                mot_de_passe: "Contraseña",
-                btn_se_connecter: "Iniciar Sesión",
-                question_decouvrir: "¿Desea descubrir la plataforma?",
-                btn_tester_demo: "Probar Demo Gratis",
-                cb_nom: "Asistente de Ferretería 🔊",
-                cb_sous_titre: "Aquí para ayudarte y hablar contigo",
-                cb_welcome: "👋 ¡Hola! ¿En qué puedo ayudarte hoy?"
-            }
-        };
-
-        function changerLangue(langue) {
-            localStorage.setItem('langue_preferee', langue);
-            if (langue === 'ar') {
-                document.body.dir = 'rtl';
-                document.body.style.textAlign = 'right';
-            } else {
-                document.body.dir = 'ltr';
-                document.body.style.textAlign = 'left';
-            }
-
-            const elements = document.querySelectorAll('[data-i18n]');
-            elements.forEach(element => {
-                const cle = element.getAttribute('data-i18n');
-                if (dictionnaireTraductions[langue] && dictionnaireTraductions[langue][cle]) {
-                    element.innerText = dictionnaireTraductions[langue][cle];
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme');
-            const icon = document.getElementById('theme-icon');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                if (icon) {
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                }
-            }
-
-            const langueSauvegardee = localStorage.getItem('langue_preferee') || 'fr';
-            const select = document.getElementById('language-select');
-            if (select) select.value = langueSauvegardee;
-            changerLangue(langueSauvegardee);
-
-            // Écouteur d'événement au clic sur le bouton Imprimer / Voir Facture
-            document.body.addEventListener('click', function(e) {
-                const btn = e.target.closest('.btn-afficher-facture');
-                if (btn) {
-                    const numero = btn.getAttribute('data-numero');
-                    const date = btn.getAttribute('data-date');
-                    
-                    // Récupérer le nom du client depuis l'attribut de l'historique
-                    let client = btn.getAttribute('data-client');
-                    
-                    // Si le bouton n'a pas de nom mais qu'un nom est saisi dans le champ de vente en cours
-                    const inputClient = document.getElementById('nom_client');
-                    if ((!client || client === "Client Comptant") && inputClient && inputClient.value.trim() !== "") {
-                        client = inputClient.value.trim();
-                    }
-
-                    const paiement = btn.getAttribute('data-paiement') || 'Espèces';
-                    
-                    // Récupérer les données de l'article rattaché au bouton
-                    const produit = btn.getAttribute('data-produit');
-                    const quantite = parseInt(btn.getAttribute('data-quantite')) || 1;
-                    const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
-
-                    const itemsFacture = [
-                        { nom: produit, qte: quantite, prix: prix }
-                    ];
-
-                    afficherFacture(numero, date, client, itemsFacture, paiement);
-                }
-            });
-        });
-
-        function toggleTheme() {
-            const icon = document.getElementById('theme-icon');
-            if (document.body.classList.contains('dark-mode')) {
-                document.body.classList.remove('dark-mode');
-                localStorage.setItem('theme', 'light');
-                if (icon) {
-                    icon.classList.remove('fa-sun');
-                    icon.classList.add('fa-moon');
-                }
-            } else {
-                document.body.classList.add('dark-mode');
-                localStorage.setItem('theme', 'dark');
-                if (icon) {
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                }
-            }
-        }
-
         function enregistrerVente(event) {
-            if (!panierVente || panierVente.length === 0) {
-                event.preventDefault(); // Empêche l'envoi si le panier est vide
-                alert("Le panier est vide ! Veuillez ajouter au moins un produit.");
+            // 1. Récupérer le nom du client saisi
+            const inputClient = document.getElementById('nom_client');
+            const nomClient = (inputClient && inputClient.value.trim() !== "") 
+                ? inputClient.value.trim() 
+                : "Client Comptant";
+
+            // 2. Récupérer le mode de paiement
+            const inputPaiement = document.getElementById('vente-mode-paiement');
+            const modePaiement = inputPaiement ? inputPaiement.value : "Espèces";
+
+            // 3. Vérifier que le panier n'est pas vide
+            if (panierVente.length === 0) {
+                alert("Veuillez ajouter au moins un produit au panier avant de valider la vente.");
+                event.preventDefault();
                 return false;
             }
 
-            // 1. Remplir le champ JSON caché
+            // 4. Mettre à jour le champ JSON pour l'envoi au serveur
             const inputPanierJson = document.getElementById('panier-json-input');
             if (inputPanierJson) {
                 inputPanierJson.value = JSON.stringify(panierVente);
             }
 
-            // Le formulaire va maintenant se soumettre naturellement à /ajouter-vente 
-            // et Flask enregistrera nom_client et mode_paiement dans Supabase !
+            // 5. Mettre à jour et afficher la modale de facture client
+            afficherFacture("FAC-NOUVEAU", new Date().toISOString().split('T')[0], nomClient, panierVente, modePaiement);
         }
 
         function afficherFacture(numero, date, client, items, paiement) {
@@ -1426,7 +987,7 @@
             document.getElementById('fac-num').innerText = numero;
             document.getElementById('fac-date').innerText = 'Date: ' + date;
 
-            // 2. Traiter et afficher dynamiquement le nom du client
+            // 2. Traiter et afficher le nom du client
             const nomClientAffiche = (client && client.trim() !== "") ? client.trim() : "Client Comptant";
             document.getElementById('fac-client').innerText = nomClientAffiche;
 
@@ -1461,13 +1022,68 @@
             modalElement.show();
         }
 
-        function parlerTexte(texte, lang = 'fr-FR') {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(texte);
-                utterance.lang = lang;
-                utterance.rate = 0.95;
-                window.speechSynthesis.speak(utterance);
+        // --- TRADUCTIONS ET SCRIPTING GLOBAL ---
+        const dictionnaireTraductions = {
+            fr: {
+                connecte: "Connecté", deconnexion: "Déconnexion", banner_demo: "Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !",
+                btn_commander: "Commander Ma Boutique", titre_dashboard: "Bienvenue sur votre Dashboard", ca: "Chiffre d'Affaires", valeur_stock: "Valeur Stock Immobilisé",
+                total_articles: "Total Articles Stock", references: "références", alertes: "Alertes Recommandation", critiques: "critiques", assistant_titre: "Assistant Intelligent de la Quincaillerie",
+                ajouter_produit_titre: "Ajouter / Réapprovisionner un Produit", lbl_nom_article: "Nom de l'Article", lbl_prix_unitaire: "Prix Unitaire (FCFA)", lbl_quantite_ajoutee: "Quantité Ajoutée",
+                lbl_seuil_alerte: "Seuil d'Alerte Stock", btn_ajouter: "Enregistrer en Stock", enregistrer_vente_titre: "Enregistrer une Vente & Générer Facture", lbl_selectionner_article: "Article",
+                opt_choisir_produit: "-- Choisir un produit --", lbl_quantite_vendue: "Qté", lbl_nom_client: "Nom du Client", lbl_mode_paiement: "Mode de Paiement", opt_especes: "Espèces",
+                opt_cheque: "Chèque", opt_virement: "Virement BTP", btn_valider_vente: "Valider & Editer la Facture", onglets_stock: "État du Stock", onglets_ventes: "Historique des Ventes",
+                onglets_factures: "Factures & Reçus", th_nom_produit: "Nom Produit", th_prix_unitaire: "Prix Unitaire", th_stock_restant: "Stock Restant", th_statut: "Statut", th_actions: "Actions",
+                st_alerte: "Alerte Seuil", st_en_stock: "En Stock", aucun_produit: "Aucun produit enregistré.", th_date: "Date", th_produit: "Produit", th_quantite: "Quantité", th_prix_vente: "Prix Vente",
+                th_total: "Total", th_vendu_par: "Vendu par", th_action: "Action", btn_annuler: "Annuler", aucune_vente: "Aucune vente enregistrée.", th_numero_facture: "N° Facture",
+                th_nom_client: "Client", th_mode_paiement: "Paiement", btn_voir_facture: "Voir / Imprimer", btn_imprimer: "Imprimer Reçu", aucune_facture: "Aucune facture enregistrée pour le moment.",
+                connexion_titre: "Connexion SaaS", connexion_sous_titre: "Espace Quincaillerie & Administration", identifiant: "Identifiant", mot_de_passe: "Mot de passe", btn_se_connecter: "Se Connecter",
+                question_decouvrir: "Vous souhaitez découvrir la plateforme ?", btn_tester_demo: "Tester la Démo Gratuite", cb_nom: "Dimbalikaw Quincaillerie 🔊", cb_sous_titre: "Mangi fi ngir wax ak dimbali leen",
+                cb_welcome: "👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?"
+            },
+            wo: {
+                connecte: "Mangi fi", deconnexion: "Génn", banner_demo: "Yanga gi tester en mode démonstration. Sa données réelles dinan sécurisé !", btn_commander: "Commander Ma Boutique",
+                titre_dashboard: "Dalal ak jamm ci sa Tableau de bord", ca: "Xalis bi nga jaay", valeur_stock: "Njeundou stock bi fi nekk", total_articles: "Limou Marchandise yi",
+                references: "royouwaay", alertes: "Artou", critiques: "jafe-jafe", assistant_titre: "Dimbalikaw Intelligent bi", ajouter_produit_titre: "Yokk walla réapprovisionner produit",
+                lbl_nom_article: "Turou produit bi", lbl_prix_unitaire: "Njeung bi (FCFA)", lbl_quantite_ajoutee: "Limbou yokk bi", lbl_seuil_alerte: "Seuil d'Alerte Stock", btn_ajouter: "Enregistrer en Stock",
+                enregistrer_vente_titre: "Enregistrer une Vente & Générer Facture", lbl_selectionner_article: "Tann produit", opt_choisir_produit: "-- Tann produit --", lbl_quantite_vendue: "Lim bi",
+                lbl_nom_client: "Turou Client bi", lbl_mode_paiement: "Naka lay fayé", opt_especes: "Xalis bu tay", opt_cheque: "Chèque", opt_virement: "Virement", btn_valider_vente: "Valider Vente bi",
+                onglets_stock: "Limou Stock bi", onglets_ventes: "Jaay yi am na", onglets_factures: "Facture yi", th_nom_produit: "Turou Produit", th_prix_unitaire: "Njeung bi", th_stock_restant: "Desitu Stock",
+                th_statut: "Statut", th_actions: "Jëf yi", st_alerte: "Stock bi waañena", st_en_stock: "Amon na", aucun_produit: "Amonul benn produit.", th_date: "Date bi", th_produit: "Produit bi",
+                th_quantite: "Lim bi", th_prix_vente: "Njeungu Jaay", th_total: "Mboloom Xalis", th_vendu_par: "Kiko jaay", th_action: "Jëf bi", btn_annuler: "Fay ko", aucune_vente: "Amul benn jaay.",
+                th_numero_facture: "N° Facture", th_nom_client: "Client bi", th_mode_paiement: "Paiement bi", btn_voir_facture: "Xool / Imprimer", btn_imprimer: "Imprimer Facture", aucune_facture: "Amul benn facture.",
+                connexion_titre: "Connexion", connexion_sous_titre: "Espace Quincaillerie", identifiant: "Identifiant", mot_de_passe: "Mot de passe", btn_se_connecter: "Se Connecter",
+                question_decouvrir: "Bëgg nga xam platform bi ?", btn_tester_demo: "Testél Démo bi", cb_nom: "Dimbalikaw Quincaillerie 🔊", cb_sous_titre: "Mangi fi ngir wax ak dimbali leen",
+                cb_welcome: "👋 Nanga def ! Lu ma la mën a dimbali tay ?"
+            }
+        };
+
+        function changerLangue(langue) {
+            localStorage.setItem('langue_preferee', langue);
+            if (langue === 'ar') {
+                document.body.dir = 'rtl';
+                document.body.style.textAlign = 'right';
+            } else {
+                document.body.dir = 'ltr';
+                document.body.style.textAlign = 'left';
+            }
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(element => {
+                const cle = element.getAttribute('data-i18n');
+                if (dictionnaireTraductions[langue] && dictionnaireTraductions[langue][cle]) {
+                    element.innerText = dictionnaireTraductions[langue][cle];
+                }
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+            } else {
+                localStorage.setItem('theme', 'light');
+                if (icon) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
             }
         }
 
@@ -1476,120 +1092,34 @@
             win.classList.toggle('d-none');
         }
 
-        function envoyerMessageChatbot(e) {
-            e.preventDefault();
-            const input = document.getElementById('chatbot-input');
-            const msg = input.value.trim();
-            if (!msg) return;
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const icon = document.getElementById('theme-icon');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+            }
+            const langueSauvegardee = localStorage.getItem('langue_preferee') || 'fr';
+            const select = document.getElementById('language-select');
+            if (select) select.value = langueSauvegardee;
+            changerLangue(langueSauvegardee);
 
-            const container = document.getElementById('chatbot-messages');
-            
-            // User message
-            container.innerHTML += `
-                <div class="d-flex mb-2 justify-content-end">
-                    <div class="bg-primary text-white p-2 rounded shadow-sm small" style="max-width: 80%;">
-                        ${msg}
-                    </div>
-                </div>
-            `;
+            // Gestionnaire global sur les boutons d'affichage/impression de facture
+            document.body.addEventListener('click', function(e) {
+                const btn = e.target.closest('.btn-afficher-facture');
+                if (btn) {
+                    const numero = btn.getAttribute('data-numero');
+                    const date = btn.getAttribute('data-date');
+                    const client = btn.getAttribute('data-client') || "Client Comptant";
+                    const produit = btn.getAttribute('data-produit');
+                    const quantite = parseInt(btn.getAttribute('data-quantite')) || 1;
+                    const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
+                    const paiement = btn.getAttribute('data-paiement') || "Espèces";
 
-            input.value = "";
-            container.scrollTop = container.scrollHeight;
-
-            setTimeout(() => {
-                let reponse = "";
-                let q = msg.toLowerCase();
-                let lang = 'fr-FR';
-
-                if (q.includes('hello') || q.includes('hi') || q.includes('how are you') || q.includes('help') || q.includes('password') || q.includes('stock') || q.includes('sell') || q.includes('sale') || q.includes('invoice') || q.includes('thanks') || q.includes('thank you')) {
-                    lang = 'en-US';
-                    if (q.includes('password') || q.includes('login') || q.includes('forgot')) {
-                        reponse = "If you forgot your password or username, please contact the Super Admin to reset it.";
-                    } else if (q.includes('stock') || q.includes('product') || q.includes('add')) {
-                        reponse = "To add a new product or restock, fill in the product name and price in the 'Add / Restock Product' block.";
-                    } else if (q.includes('sell') || q.includes('sale') || q.includes('invoice')) {
-                        reponse = "To record a sale and issue an invoice, select the item, enter customer details and click 'Validate & Edit Invoice'.";
-                    } else if (q.includes('hello') || q.includes('hi') || q.includes('how are you')) {
-                        reponse = "Hello! I am your assistant. How can I help you manage your hardware store today?";
-                    } else if (q.includes('thanks') || q.includes('thank you')) {
-                        reponse = "You're welcome! I am here whenever you need help.";
-                    } else {
-                        reponse = "I didn't quite catch that. How can I assist you with your inventory, sales or invoices?";
-                    }
-                } else if (q.includes('مرحبا') || q.includes('كلمة السر') || q.includes('المخزون') || q.includes('بيع') || q.includes('فاتورة') || q.includes('شكرا')) {
-                    lang = 'ar-SA';
-                    if (q.includes('كلمة السر') || q.includes('الدخول')) {
-                        reponse = "إذا نسيت كلمة المرور أو اسم المستخدم، يرجى الاتصال بمسؤول النظام لإعادة ضبطها.";
-                    } else if (q.includes('المخزون') || q.includes('منتج')) {
-                        reponse = "لإضافة منتج جديد، يرجى ملء اسم المنتج والسعر في نموذج 'إضافة / إعادة تزويد منتج'.";
-                    } else if (q.includes('بيع') || q.includes('فاتورة')) {
-                        reponse = "لتسجيل عملية بيع، اختر المنتج وأدخل تفاصيل العميل ثم انقر على 'تأكيد وإصدار الفاتورة'.";
-                    } else if (q.includes('مرحبا')) {
-                        reponse = "مرحباً بك! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم في إدارة الخردوات؟";
-                    } else if (q.includes('شكرا')) {
-                        reponse = "عفواً! أنا في خدمتك دائماً.";
-                    } else {
-                        reponse = "عذراً، لم أفهم طلبك جيداً. كيف يمكنني مساعدتك في المبيعات أو الفواتير أو المخزون؟";
-                    }
-                } else if (q.includes('hola') || q.includes('buenos') || q.includes('inventario') || q.includes('venta') || q.includes('factura') || q.includes('gracias')) {
-                    lang = 'es-ES';
-                    if (q.includes('contraseña') || q.includes('usuario')) {
-                        reponse = "Si olvidaste tu contraseña o usuario, contacta al Súper Administrador para restablecerlo.";
-                    } else if (q.includes('inventario') || q.includes('producto') || q.includes('añadir')) {
-                        reponse = "Para añadir productos al inventario, completa el nombre y precio en la sección 'Añadir / Reabastecer Producto'.";
-                    } else if (q.includes('venta') || q.includes('vender') || q.includes('factura')) {
-                        reponse = "Para registrar una venta e imprimir factura, selecciona el producto, ingresa la cantidad y haz clic en 'Confirmar y Facturar'.";
-                    } else if (q.includes('hola') || q.includes('buenos')) {
-                        reponse = "¡Hola! Soy tu asistente. ¿En qué puedo ayudarte hoy con la gestión de tu ferretería?";
-                    } else if (q.includes('gracias')) {
-                        reponse = "¡De nada! Estoy aquí para ayudarte siempre que lo necesites.";
-                    } else {
-                        reponse = "Lo siento, no entendí bien. ¿En qué te puedo ayudar con las ventas, facturas o inventario?";
-                    }
-                } else if (q.includes('nanga def') || q.includes('mangi fi') || q.includes('faté') || q.includes('yokk') || q.includes('jaay') || q.includes('facture') || q.includes('xalis') || q.includes('jerejef')) {
-                    lang = 'fr-FR';
-                    if (q.includes('faté') || q.includes('mot de passe')) {
-                        reponse = "So fatée sa mot de passe walla identifiant, wooyal Super Admin bi ngir mu réinitialiser ko.";
-                    } else if (q.includes('yokk') || q.includes('stock')) {
-                        reponse = "Ngir yokk produit ci stock bi, bindal turu produit bi ak prix bi ci bloc 'Yokk marchandiise ci stock bi'.";
-                    } else if (q.includes('jaay') || q.includes('facture')) {
-                        reponse = "Ngir bind njaay té génné facture, tannal produit bi, bindal touru client bi puis pesal 'Dëggal té génné Facture bi'.";
-                    } else if (q.includes('nanga def') || q.includes('mangi fi')) {
-                        reponse = "Mangi fi rekk jamms rekk! Naka la la mën a dimbali tay ci sa quincaillerie bi?";
-                    } else if (q.includes('jerejef')) {
-                        reponse = "Amul solo! Mangi fi saas nekk ngir dimbali la.";
-                    } else {
-                        reponse = "Dégguma bu baax sa question. Lu ma la mën a dimbali ci stock bi, njaay yi walla facture yi?";
-                    }
-                } else {
-                    lang = 'fr-FR';
-                    if (q.includes('mot de passe') || q.includes('identifiant') || q.includes('oublié')) {
-                        reponse = "Si vous avez oublié votre mot de passe, veuillez contacter le Super Administrateur pour le réinitialiser.";
-                    } else if (q.includes('stock') || q.includes('produit') || q.includes('ajouter')) {
-                        reponse = "Pour ajouter un produit au stock, remplissez le nom et le prix dans le bloc 'Ajouter / Réapprovisionner un Produit'.";
-                    } else if (q.includes('vente') || q.includes('vendre') || q.includes('facture') || q.includes('reçu')) {
-                        reponse = "Pour enregistrer une vente et générer une facture, remplissez le formulaire d'enregistrement de vente puis consultez l'onglet 'Factures & Reçus' pour imprimer.";
-                    } else if (q.includes('bonjour') || q.includes('salut')) {
-                        reponse = "Bonjour ! Je suis votre assistant de gestion. Comment puis-je vous aider aujourd'hui ?";
-                    } else if (q.includes('merci')) {
-                        reponse = "Je vous en prie ! Je suis toujours disponible si vous avez d'autres questions.";
-                    } else {
-                        reponse = "Je n'ai pas très bien compris votre demande. Je peux vous aider sur la gestion du stock, l'enregistrement des ventes ou la réimpression des factures.";
-                    }
+                    afficherFacture(numero, date, client, [{ nom: produit, qte: quantite, prix: prix }], paiement);
                 }
-
-                container.innerHTML += `
-                    <div class="d-flex mb-2">
-                        <div class="bg-white p-2 rounded shadow-sm border text-dark small me-auto" style="max-width: 80%;">
-                            ${reponse}
-                        </div>
-                    </div>
-                `;
-
-                container.scrollTop = container.scrollHeight;
-                parlerTexte(reponse, lang);
-            }, 500);
-        }
+            });
+        });
     </script>
 </body>
 </html>
