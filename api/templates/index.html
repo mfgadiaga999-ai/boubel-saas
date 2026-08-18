@@ -361,8 +361,10 @@
                     <option value="fr">🇫🇷 Français</option>
                     <option value="wo">🇸🇳 Wolof</option>
                     <option value="en">🇬🇧 English</option>
-                    <option value="ar">🇸🇦 العربية</option>
                     <option value="es">🇪🇸 Español</option>
+                    <option value="it">🇮🇹 Italiano</option>
+                    <option value="ar">🇸🇦 العربية</option>
+                    <option value="de">🇩🇪 Deutsch</option>
                 </select>
 
                 <span class="small d-none d-md-inline"><i class="fa-solid fa-user me-1"></i> <span data-i18n="connecte">Connecté</span>: <b>{{ session.get('nom_utilisateur', 'gerant_demo') }}</b></span>
@@ -1031,7 +1033,7 @@
             modalElement.show();
         }
 
-        // --- TRADUCTIONS ET SCRIPTING GLOBAL ---
+       // --- TRADUCTIONS ET SCRIPTING GLOBAL ---
         const dictionnaireTraductions = {
             fr: {
                 connecte: "Connecté", deconnexion: "Déconnexion", banner_demo: "Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !",
@@ -1063,6 +1065,86 @@
                 connexion_titre: "Connexion", connexion_sous_titre: "Espace Quincaillerie", identifiant: "Identifiant", mot_de_passe: "Mot de passe", btn_se_connecter: "Se Connecter",
                 question_decouvrir: "Bëgg nga xam platform bi ?", btn_tester_demo: "Testél Démo bi", cb_nom: "Dimbalikaw Quincaillerie 🔊", cb_sous_titre: "Mangi fi ngir wax ak dimbali leen",
                 cb_welcome: "👋 Nanga def ! Lu ma la mën a dimbali tay ?"
+            },
+            en: {
+                connecte: "Connected", deconnexion: "Logout", banner_demo: "You are testing the interface in demo mode. Your real data will be completely secure!",
+                btn_commander: "Order My Store", titre_dashboard: "Welcome to your Dashboard", ca: "Revenue", valeur_stock: "Tied-up Stock Value",
+                total_articles: "Total Items in Stock", references: "items", alertes: "Recommendation Alerts", critiques: "critical", assistant_titre: "Hardware Smart Assistant",
+                ajouter_produit_titre: "Add / Restock a Product", lbl_nom_article: "Item Name", lbl_prix_unitaire: "Unit Price (FCFA)", lbl_quantite_ajoutee: "Added Quantity",
+                lbl_seuil_alerte: "Stock Alert Threshold", btn_ajouter: "Save to Stock", enregistrer_vente_titre: "Record Sale & Generate Invoice", lbl_selectionner_article: "Item",
+                opt_choisir_produit: "-- Select a product --", lbl_quantite_vendue: "Qty", lbl_nom_client: "Customer Name", lbl_mode_paiement: "Payment Method", opt_especes: "Cash",
+                opt_cheque: "Check", opt_virement: "Bank Transfer", btn_valider_vente: "Validate & Print Invoice", onglets_stock: "Stock Status", onglets_ventes: "Sales History",
+                onglets_factures: "Invoices & Receipts", th_nom_produit: "Product Name", th_prix_unitaire: "Unit Price", th_stock_restant: "Remaining Stock", th_statut: "Status", th_actions: "Actions",
+                st_alerte: "Low Stock Alert", st_en_stock: "In Stock", aucun_produit: "No products recorded.", th_date: "Date", th_produit: "Product", th_quantite: "Quantity", th_prix_vente: "Selling Price",
+                th_total: "Total", th_vendu_par: "Sold by", th_action: "Action", btn_annuler: "Cancel", aucune_vente: "No sales recorded.", th_numero_facture: "Invoice No.",
+                th_nom_client: "Customer", th_mode_paiement: "Payment", btn_voir_facture: "View / Print", btn_imprimer: "Print Receipt", aucune_facture: "No invoices recorded yet.",
+                connexion_titre: "SaaS Login", connexion_sous_titre: "Hardware Store & Management Portal", identifiant: "Username", mot_de_passe: "Password", btn_se_connecter: "Log In",
+                question_decouvrir: "Want to explore the platform?", btn_tester_demo: "Try Free Demo", cb_nom: "Hardware Assistant 🔊", cb_sous_titre: "Here to help you out",
+                cb_welcome: "👋 Hello! How can I help you today?"
+            },
+            es: {
+                connecte: "Conectado", deconnexion: "Cerrar sesión", banner_demo: "Está probando la interfaz en modo demostración. Sus datos reales estarán completamente seguros.",
+                btn_commander: "Pedir Mi Tienda", titre_dashboard: "Bienvenido a su Panel de Control", ca: "Ingresos", valeur_stock: "Valor del Stock Inmovilizado",
+                total_articles: "Total Artículos en Stock", references: "referencias", alertes: "Alertas de Recomendación", critiques: "críticas", assistant_titre: "Asistente Inteligente de Ferretería",
+                ajouter_produit_titre: "Añadir / Reabastecer un Producto", lbl_nom_article: "Nombre del Artículo", lbl_prix_unitaire: "Precio Unitario (FCFA)", lbl_quantite_ajoutee: "Cantidad Añadida",
+                lbl_seuil_alerte: "Umbral de Alerta de Stock", btn_ajouter: "Guardar en Stock", enregistrer_vente_titre: "Registrar Venta y Generar Factura", lbl_selectionner_article: "Artículo",
+                opt_choisir_produit: "-- Seleccionar un producto --", lbl_quantite_vendue: "Cant.", lbl_nom_client: "Nombre del Cliente", lbl_mode_paiement: "Método de Pago", opt_especes: "Efectivo",
+                opt_cheque: "Cheque", opt_virement: "Transferencia Bancaria", btn_valider_vente: "Validar y Emitir Factura", onglets_stock: "Estado del Stock", onglets_ventes: "Historial de Ventas",
+                onglets_factures: "Facturas y Recibos", th_nom_produit: "Nombre del Producto", th_prix_unitaire: "Precio Unitario", th_stock_restant: "Stock Restante", th_statut: "Estado", th_actions: "Acciones",
+                st_alerte: "Alerta Stock Bajo", st_en_stock: "En Stock", aucun_produit: "No hay productos registrados.", th_date: "Fecha", th_produit: "Producto", th_quantite: "Cantidad", th_prix_vente: "Precio Venta",
+                th_total: "Total", th_vendu_par: "Vendido por", th_action: "Acción", btn_annuler: "Cancelar", aucune_vente: "No hay ventas registradas.", th_numero_facture: "N° Factura",
+                th_nom_client: "Cliente", th_mode_paiement: "Pago", btn_voir_facture: "Ver / Imprimir", btn_imprimer: "Imprimir Recibo", aucune_facture: "No hay facturas registradas por el momento.",
+                connexion_titre: "Iniciar Sesión SaaS", connexion_sous_titre: "Espacio Ferretería y Administración", identifiant: "Usuario", mot_de_passe: "Contraseña", btn_se_connecter: "Iniciar Sesión",
+                question_decouvrir: "¿Desea conocer la plataforma?", btn_tester_demo: "Probar Demo Gratis", cb_nom: "Asistente Ferretería 🔊", cb_sous_titre: "Aquí para ayudarle",
+                cb_welcome: "👋 ¡Hola! ¿Cómo puedo ayudarle hoy?"
+            },
+            it: {
+                connecte: "Connesso", deconnexion: "Disconnessione", banner_demo: "Stai testando l'interfaccia in modalità demo. I tuoi dati reali saranno completamente al sicuro!",
+                btn_commander: "Ordina Il Mio Negozio", titre_dashboard: "Benvenuto nella tua Dashboard", ca: "Fatturato", valeur_stock: "Valore Stock Immobilizzato",
+                total_articles: "Totale Articoli in Stock", references: "referenze", alertes: "Avvisi Raccomandazioni", critiques: "critici", assistant_titre: "Assistente Intelligente Ferramenta",
+                ajouter_produit_titre: "Aggiungi / Rifornisci un Prodotto", lbl_nom_article: "Nome Articolo", lbl_prix_unitaire: "Prezzo Unitario (FCFA)", lbl_quantite_ajoutee: "Quantità Aggiunta",
+                lbl_seuil_alerte: "Soglia di Allarme Stock", btn_ajouter: "Salva in Stock", enregistrer_vente_titre: "Registra Vendita e Genera Fattura", lbl_selectionner_article: "Articolo",
+                opt_choisir_produit: "-- Scegli un prodotto --", lbl_quantite_vendue: "Qtà", lbl_nom_client: "Nome del Cliente", lbl_mode_paiement: "Metodo di Pagamento", opt_especes: "Contanti",
+                opt_cheque: "Assegno", opt_virement: "Bonifico Bancario", btn_valider_vente: "Conferma e Stampa Fattura", onglets_stock: "Stato dello Stock", onglets_ventes: "Cronologia Vendite",
+                onglets_factures: "Fatture e Ricevute", th_nom_produit: "Nome Prodotto", th_prix_unitaire: "Prezzo Unitario", th_stock_restant: "Rimanenza Stock", th_statut: "Stato", th_actions: "Azioni",
+                st_alerte: "Allarme Scorta", st_en_stock: "Disponibile", aucun_produit: "Nessun prodotto registrato.", th_date: "Data", th_produit: "Prodotto", th_quantite: "Quantità", th_prix_vente: "Prezzo Vendita",
+                th_total: "Totale", th_vendu_par: "Venduto da", th_action: "Azione", btn_annuler: "Annulla", aucune_vente: "Nessuna vendita registrata.", th_numero_facture: "N° Fattura",
+                th_nom_client: "Cliente", th_mode_paiement: "Pagamento", btn_voir_facture: "Vedi / Stampa", btn_imprimer: "Stampa Ricevuta", aucune_facture: "Nessuna fattura registrata al momento.",
+                connexion_titre: "Accesso SaaS", connexion_sous_titre: "Area Ferramenta e Amministrazione", identifiant: "Nome Utente", mot_de_passe: "Password", btn_se_connecter: "Accedi",
+                question_decouvrir: "Vuoi scoprire la piattaforma?", btn_tester_demo: "Prova la Demo Gratuita", cb_nom: "Assistente Ferramenta 🔊", cb_sous_titre: "Sono qui per aiutarti",
+                cb_welcome: "👋 Ciao! Come posso aiutarti oggi?"
+            },
+            ar: {
+                connecte: "متصل", deconnexion: "تسجيل الخروج", banner_demo: "أنت تختبر الواجهة في الوضع التجريبي. بياناتك الحقيقية ستكون آمنة تمامًا!",
+                btn_commander: "طلب متجري", titre_dashboard: "مرحبًا بك في لوحة التحكم", ca: "رقم الأعمال", valeur_stock: "قيمة المخزون الثابت",
+                total_articles: "إجمالي المنتجات في المخزون", references: "منتجات", alertes: "تنبيهات التوصية", critiques: "حرجة", assistant_titre: "المساعد الذكي للمحل",
+                ajouter_produit_titre: "إضافة / إعادة تزويد منتج", lbl_nom_article: "اسم المنتج", lbl_prix_unitaire: "سعر الوحدة (FCFA)", lbl_quantite_ajoutee: "الكمية المضافة",
+                lbl_seuil_alerte: "حد تنبيه المخزون", btn_ajouter: "حفظ في المخزون", enregistrer_vente_titre: "تسجيل بيع وإنشاء فاتورة", lbl_selectionner_article: "المنتج",
+                opt_choisir_produit: "-- اختر منتجًا --", lbl_quantite_vendue: "الكمية", lbl_nom_client: "اسم العميل", lbl_mode_paiement: "طريقة الدفع", opt_especes: "نقدًا",
+                opt_cheque: "شيك", opt_virement: "تحويل بنكي", btn_valider_vente: "تأكيد وإصدار الفاتورة", onglets_stock: "حالة المخزون", onglets_ventes: "سجل المبيعات",
+                onglets_factures: "الفواتير والإيصالات", th_nom_produit: "اسم المنتج", th_prix_unitaire: "سعر الوحدة", th_stock_restant: "المخزون المتبقي", th_statut: "الحالة", th_actions: "الإجراءات",
+                st_alerte: "تنبيه الحد الأدنى", st_en_stock: "متوفر", aucun_produit: "لا يوجد منتج مسجل.", th_date: "التاريخ", th_produit: "المنتج", th_quantite: "الكمية", th_prix_vente: "سعر البيع",
+                th_total: "الإجمالي", th_vendu_par: "تم البيع بواسطة", th_action: "إجراء", btn_annuler: "إلغاء", aucune_vente: "لا توجد مبيعات مسجلة.", th_numero_facture: "رقم الفاتورة",
+                th_nom_client: "العميل", th_mode_paiement: "الدفع", btn_voir_facture: "عرض / طباعة", btn_imprimer: "طباعة الإيصال", aucune_facture: "لا توجد فواتير مسجلة حاليًا.",
+                connexion_titre: "تسجيل الدخول", connexion_sous_titre: "مساحة إدارة المتجر", identifiant: "اسم المستخدم", mot_de_passe: "كلمة المرور", btn_se_connecter: "دخول",
+                question_decouvrir: "هل ترغب في اكتشاف المنصة؟", btn_tester_demo: "تجربة العرض المجاني", cb_nom: "مساعد المتجر 🔊", cb_sous_titre: "أنا هنا لمساعدتك",
+                cb_welcome: "👋 مرحبًا! كيف يمكنني مساعدتك اليوم؟"
+            },
+            de: {
+                connecte: "Angemeldet", deconnexion: "Abmelden", banner_demo: "Sie testen die Benutzeroberfläche im Demonstrationsmodus. Ihre echten Daten sind völlig sicher!",
+                btn_commander: "Meinen Shop Bestellen", titre_dashboard: "Willkommen auf Ihrem Dashboard", ca: "Umsatz", valeur_stock: "Wert des gebundenen Lagers",
+                total_articles: "Gesamtartikel im Lager", references: "Referenzen", alertes: "Empfehlungswarnungen", critiques: "kritisch", assistant_titre: "Intelligenter Baumarkt-Assistent",
+                ajouter_produit_titre: "Produkt Hinzufügen / Nachfüllen", lbl_nom_article: "Artikelname", lbl_prix_unitaire: "Einzelpreis (FCFA)", lbl_quantite_ajoutee: "Hinzugefügte Menge",
+                lbl_seuil_alerte: "Lager-Warnschwelle", btn_ajouter: "Im Lager Speichern", enregistrer_vente_titre: "Verkauf Registrieren & Rechnung Erstellen", lbl_selectionner_article: "Artikel",
+                opt_choisir_produit: "-- Produkt auswählen --", lbl_quantite_vendue: "Menge", lbl_nom_client: "Kundenname", lbl_mode_paiement: "Zahlungsart", opt_especes: "Bargeld",
+                opt_cheque: "Scheck", opt_virement: "Banküberweisung", btn_valider_vente: "Bestätigen & Rechnung Drucken", onglets_stock: "Lagerbestand", onglets_ventes: "Verkaufsverlauf",
+                onglets_factures: "Rechnungen & Quittungen", th_nom_produit: "Produktname", th_prix_unitaire: "Einzelpreis", th_stock_restant: "Restbestand", th_statut: "Status", th_actions: "Aktionen",
+                st_alerte: "Lager-Warnung", st_en_stock: "Auf Lager", aucun_produit: "Keine Produkte registriert.", th_date: "Datum", th_produit: "Produkt", th_quantite: "Menge", th_prix_vente: "Verkaufspreis",
+                th_total: "Gesamt", th_vendu_par: "Verkauft von", th_action: "Aktion", btn_annuler: "Stornieren", aucune_vente: "Keine Verkäufe registriert.", th_numero_facture: "Rechnungs-Nr.",
+                th_nom_client: "Kunde", th_mode_paiement: "Zahlung", btn_voir_facture: "Anzeigen / Drucken", btn_imprimer: "Quittung Drucken", aucune_facture: "Derzeit keine Rechnungen registriert.",
+                connexion_titre: "SaaS-Anmeldung", connexion_sous_titre: "Baumarkt- & Verwaltungsbereich", identifiant: "Benutzername", mot_de_passe: "Passwort", btn_se_connecter: "Anmelden",
+                question_decouvrir: "Möchten Sie die Plattform entdecken?", btn_tester_demo: "Kostenlose Demo Testen", cb_nom: "Baumarkt-Assistent 🔊", cb_sous_titre: "Ich bin hier, um Ihnen zu helfen",
+                cb_welcome: "👋 Hallo! Wie kann ich Ihnen heute helfen?"
             }
         };
 
