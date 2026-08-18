@@ -286,6 +286,13 @@ def index():
                 qte = int(v.get('quantite_vendue', 1))
                 px = float(v.get('prix_vente', 0))
                 date_v = str(v.get('date_vente', ''))
+                
+                # --- RÉCUPÉRATION DU NOM DU CLIENT ET MODE DE PAIEMENT ---
+                nom_client = v.get('nom_client') or v.get('client_nom') or v.get('client')
+                if not nom_client or not str(nom_client).strip():
+                    nom_client = "Client Comptant"
+                
+                mode_paiement = v.get('mode_paiement') or "Espèces"
 
                 if date_v.startswith(mois_courant):
                     ca_quincaillerie_mois += (qte * px)
@@ -297,7 +304,9 @@ def index():
                     'nom_produit': v.get('nom_produit'),
                     'quantite_vendue': qte,
                     'prix_vente': px,
-                    'vendu_par': v.get('vendu_par')
+                    'vendu_par': v.get('vendu_par'),
+                    'nom_client': nom_client,          # Ajouté pour index.html
+                    'mode_paiement': mode_paiement      # Ajouté pour index.html
                 })
 
             gerant_insights = []
@@ -552,8 +561,8 @@ def ajouter_vente():
     supabase = get_supabase_client()
     panier_json = request.form.get('panier_json')
 
-    # 1. Récupération du nom du client et du mode de paiement depuis le formulaire HTML
-    nom_client = request.form.get('nom_client', '').strip()
+    # Récupération du nom du client envoyé par le formulaire
+    nom_client = request.form.get('nom_client', 'Client Comptant').strip()
     if not nom_client:
         nom_client = "Client Comptant"
 

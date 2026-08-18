@@ -955,31 +955,40 @@
         }
 
         function enregistrerVente(event) {
-            // 1. Récupérer le nom du client saisi
+            // 1. Récupérer l'élément input et le champ de paiement
             const inputClient = document.getElementById('nom_client');
-            const nomClient = (inputClient && inputClient.value.trim() !== "") 
-                ? inputClient.value.trim() 
-                : "Client Comptant";
-
-            // 2. Récupérer le mode de paiement
             const inputPaiement = document.getElementById('vente-mode-paiement');
+            const inputPanierJson = document.getElementById('panier-json-input');
+
+            // 2. Récupérer les valeurs
+            let nomClient = inputClient ? inputClient.value.trim() : "";
+            if (nomClient === "") {
+                nomClient = "Client Comptant";
+            }
+            
+            // Forcer la valeur dans l'input pour que le formulaire POST l'envoie à Flask
+            if (inputClient) {
+                inputClient.value = nomClient;
+            }
+
             const modePaiement = inputPaiement ? inputPaiement.value : "Espèces";
 
             // 3. Vérifier que le panier n'est pas vide
-            if (panierVente.length === 0) {
+            if (!panierVente || panierVente.length === 0) {
                 alert("Veuillez ajouter au moins un produit au panier avant de valider la vente.");
-                event.preventDefault();
+                event.preventDefault(); // Annule la soumission du formulaire
                 return false;
             }
 
-            // 4. Mettre à jour le champ JSON pour l'envoi au serveur
-            const inputPanierJson = document.getElementById('panier-json-input');
+            // 4. Mettre à jour le champ JSON caché qui sera envoyé à Flask / Supabase
             if (inputPanierJson) {
                 inputPanierJson.value = JSON.stringify(panierVente);
             }
 
-            // 5. Mettre à jour et afficher la modale de facture client
+            // 5. Afficher immédiatement la modale de facture avec le VRAI nom
             afficherFacture("FAC-NOUVEAU", new Date().toISOString().split('T')[0], nomClient, panierVente, modePaiement);
+
+            // Le formulaire continue sa soumission vers /ajouter-vente pour enregistrer dans Supabase !
         }
 
         function afficherFacture(numero, date, client, items, paiement) {
