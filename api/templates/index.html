@@ -845,37 +845,44 @@
     </div>
     {% endif %}
 
-    <button id="chatbot-toggle-btn" class="btn btn-primary rounded-circle shadow-lg position-fixed bottom-0 end-0 m-4 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px; z-index: 1050;" onclick="toggleChatbot()">
-        <i class="fas fa-robot"></i>
-    </button>
+        <!-- Bouton flottant d'ouverture/fermeture du Chatbot -->
+        <button id="chatbot-toggle-btn" class="btn btn-primary rounded-circle shadow-lg position-fixed bottom-0 end-0 m-4 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px; z-index: 1050;" onclick="toggleChatbot()">
+            <i class="fas fa-robot"></i>
+        </button>
 
-    <div id="chatbot-window" class="card shadow-lg position-fixed bottom-0 end-0 mb-5 me-4 d-none" style="width: 350px; height: 450px; z-index: 1050; border-radius: 15px; overflow: hidden;">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
-            <div class="d-flex align-items-center gap-2">
-                <i class="fas fa-robot fa-lg"></i>
-                <div>
-                    <h6 class="mb-0 fw-bold" id="cb-nom" data-i18n="cb_nom">Dimbalikaw Quincaillerie 🔊</h6>
-                    <small class="text-light" style="font-size: 11px;" id="cb-sous-titre" data-i18n="cb_sous_titre">Mangi fi ngir wax ak dimbali leen</small>
+        <!-- Fenêtre du Chatbot -->
+        <div id="chatbot-window" class="card shadow-lg position-fixed bottom-0 end-0 mb-5 me-4 d-none" style="width: 350px; height: 450px; z-index: 1050; border-radius: 15px; overflow: hidden;">
+            <!-- En-tête -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-robot fa-lg"></i>
+                    <div>
+                        <h6 class="mb-0 fw-bold" id="cb-nom" data-i18n="cb_nom">Dimbalikaw Quincaillerie 🔊</h6>
+                        <small class="text-light" style="font-size: 11px;" id="cb-sous-titre" data-i18n="cb_sous_titre">Mangi fi ngir wax ak dimbali leen</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" onclick="toggleChatbot()"></button>
+            </div>
+
+            <!-- Zone de défilement des messages -->
+            <div class="card-body p-3 overflow-auto" id="chatbot-messages" style="background-color: #f8f9fa;">
+                <div class="d-flex flex-column align-items-start mb-2">
+                    <div class="p-2 px-3 rounded-3 bg-white text-dark border shadow-sm small" style="max-width: 85%; border-bottom-left-radius: 0 !important;" id="cb-welcome" data-i18n="cb_welcome">
+                        👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?
+                    </div>
                 </div>
             </div>
-            <button type="button" class="btn-close btn-close-white" onclick="toggleChatbot()"></button>
-        </div>
-        <div class="card-body p-3 overflow-auto" id="chatbot-messages" style="background-color: #f8f9fa;">
-            <div class="d-flex flex-column align-items-start mb-2">
-                <div class="p-2 px-3 rounded-3 bg-white text-dark border shadow-sm small" style="max-width: 85%; border-bottom-left-radius: 0 !important;" id="cb-welcome" data-i18n="cb_welcome">
-                    👋 Bonjour ! Comment puis-je vous aider aujourd'hui ?
-                </div>
+
+            <!-- Formulaire d'envoi -->
+            <div class="card-footer bg-white border-top p-2">
+                <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
+                    <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Posez une question..." required autocomplete="off">
+                    <button type="submit" class="btn btn-primary btn-sm px-3">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
             </div>
         </div>
-        <div class="card-footer bg-white border-top p-2">
-            <form id="chatbot-form" onsubmit="envoyerMessageChatbot(event)" class="d-flex gap-2">
-                <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Posez une question..." required autocomplete="off">
-                <button type="submit" class="btn btn-primary btn-sm px-3">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </form>
-        </div>
-    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -957,55 +964,43 @@
         }
 
         function enregistrerVente(event) {
-            // 1. Récupérer l'élément input et le champ de paiement
             const inputClient = document.getElementById('nom_client');
             const inputPaiement = document.getElementById('vente-mode-paiement');
             const inputPanierJson = document.getElementById('panier-json-input');
 
-            // 2. Récupérer les valeurs
             let nomClient = inputClient ? inputClient.value.trim() : "";
             if (nomClient === "") {
                 nomClient = "Client Comptant";
             }
             
-            // Forcer la valeur dans l'input pour que le formulaire POST l'envoie à Flask
             if (inputClient) {
                 inputClient.value = nomClient;
             }
 
             const modePaiement = inputPaiement ? inputPaiement.value : "Espèces";
 
-            // 3. Vérifier que le panier n'est pas vide
             if (!panierVente || panierVente.length === 0) {
                 alert("Veuillez ajouter au moins un produit au panier avant de valider la vente.");
-                event.preventDefault(); // Annule la soumission du formulaire
+                event.preventDefault();
                 return false;
             }
 
-            // 4. Mettre à jour le champ JSON caché qui sera envoyé à Flask / Supabase
             if (inputPanierJson) {
                 inputPanierJson.value = JSON.stringify(panierVente);
             }
 
-            // 5. Afficher immédiatement la modale de facture avec le VRAI nom
             afficherFacture("FAC-NOUVEAU", new Date().toISOString().split('T')[0], nomClient, panierVente, modePaiement);
-
-            // Le formulaire continue sa soumission vers /ajouter-vente pour enregistrer dans Supabase !
         }
 
         function afficherFacture(numero, date, client, items, paiement) {
-            // 1. Mettre à jour le numéro et la date
             document.getElementById('fac-num').innerText = numero;
             document.getElementById('fac-date').innerText = 'Date: ' + date;
 
-            // 2. Traiter et afficher le nom du client
             const nomClientAffiche = (client && client.trim() !== "") ? client.trim() : "Client Comptant";
             document.getElementById('fac-client').innerText = nomClientAffiche;
 
-            // 3. Mettre à jour le mode de paiement
             document.getElementById('fac-mode').innerText = paiement;
 
-            // 4. Remplir le tableau des articles
             const tbody = document.getElementById('fac-table-items');
             tbody.innerHTML = "";
             let totalGeneral = 0;
@@ -1025,15 +1020,31 @@
                 `;
             });
 
-            // 5. Afficher le total général
             document.getElementById('fac-grand-total').innerText = formatPrix(totalGeneral);
 
-            // 6. Ouvrir la modale Bootstrap
             const modalElement = new bootstrap.Modal(document.getElementById('modalFacture'));
             modalElement.show();
         }
 
-       // --- TRADUCTIONS ET SCRIPTING GLOBAL ---
+        function parlerTexte(texte, lang = 'fr-FR') {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+
+                // 1. Nettoyage du texte pour la voix
+                const texteNettoye = texte
+                    .replace(/[*_#`~]/g, '')  // Supprime les astérisques, gras, soulignés, etc.
+                    .replace(/\n+/g, '. ');   // Remplace les sauts de ligne par des pauses
+
+                // 2. Transmettre le texte nettoyé à l'API vocal
+                const utterance = new SpeechSynthesisUtterance(texteNettoye);
+                utterance.lang = lang;
+                utterance.rate = 0.95;
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- TRADUCTIONS ET SCRIPTING GLOBAL ---
         const dictionnaireTraductions = {
             fr: {
                 connecte: "Connecté", deconnexion: "Déconnexion", banner_demo: "Vous testez l'interface en mode démonstration. Vos données réelles seront totalement sécurisées !",
@@ -1180,22 +1191,119 @@
 
         function toggleChatbot() {
             const win = document.getElementById('chatbot-window');
-            win.classList.toggle('d-none');
+            if (win) win.classList.toggle('d-none');
+        }
+
+        async function envoyerMessageChatbot(e) {
+            if (e) e.preventDefault();
+            const input = document.getElementById('chatbot-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const container = document.getElementById('chatbot-messages');
+
+            // 1. Afficher le message de l'utilisateur
+            container.innerHTML += `
+                <div class="d-flex mb-2 justify-content-end">
+                    <div class="bg-primary text-white p-2 rounded shadow-sm small" style="max-width: 80%;">
+                        ${msg}
+                    </div>
+                </div>
+            `;
+
+            input.value = "";
+            container.scrollTop = container.scrollHeight;
+
+            // 2. Afficher l'indicateur de chargement
+            const loadingId = 'loading-' + Date.now();
+            container.innerHTML += `
+                <div class="d-flex mb-2" id="${loadingId}">
+                    <div class="bg-light p-2 rounded shadow-sm border text-muted small me-auto">
+                        <em>L'assistant réfléchit...</em>
+                    </div>
+                </div>
+            `;
+            container.scrollTop = container.scrollHeight;
+
+            try {
+                // 3. Appel à la route Flask /chatbot
+                const response = await fetch('/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+
+                const data = await response.json();
+
+                // Retirer l'indicateur de chargement
+                document.getElementById(loadingId)?.remove();
+
+                let reponseText = "";
+                if (data.status === 'success') {
+                    reponseText = data.response;
+                } else {
+                    reponseText = "Désolé, une erreur est survenue lors du traitement de votre demande.";
+                }
+
+                // 4. Afficher la réponse générée par Gemini
+                container.innerHTML += `
+                    <div class="d-flex mb-2">
+                        <div class="bg-white p-2 rounded shadow-sm border text-dark small me-auto" style="max-width: 80%;">
+                            ${reponseText}
+                        </div>
+                    </div>
+                `;
+
+                container.scrollTop = container.scrollHeight;
+
+                // 5. Lecture vocale automatique (si la fonction existe)
+                if (typeof parlerTexte === 'function') {
+                    parlerTexte(reponseText, 'fr-FR');
+                }
+
+            } catch (error) {
+                console.error("Erreur serveur :", error);
+                document.getElementById(loadingId)?.remove();
+                container.innerHTML += `
+                    <div class="d-flex mb-2">
+                        <div class="bg-danger text-white p-2 rounded shadow-sm small me-auto" style="max-width: 80%;">
+                            Impossible de contacter l'assistant. Vérifiez votre connexion.
+                        </div>
+                    </div>
+                `;
+                container.scrollTop = container.scrollHeight;
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // --- GESTION DU THÈME SOMBRE ---
             const savedTheme = localStorage.getItem('theme');
             const icon = document.getElementById('theme-icon');
             if (savedTheme === 'dark') {
                 document.body.classList.add('dark-mode');
                 if (icon) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
             }
+
+            // --- GESTION DES TRADUCTIONS ---
             const langueSauvegardee = localStorage.getItem('langue_preferee') || 'fr';
             const select = document.getElementById('language-select');
             if (select) select.value = langueSauvegardee;
-            changerLangue(langueSauvegardee);
+            if (typeof changerLangue === 'function') {
+                changerLangue(langueSauvegardee);
+            }
 
-            // Gestionnaire global sur les boutons d'affichage/impression de facture
+            // --- ECOUTEUR TOUCH "ENTRÉE" SUR LE CHATBOT ---
+            const chatbotInput = document.getElementById('chatbot-input');
+            if (chatbotInput) {
+                chatbotInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        envoyerMessageChatbot(e);
+                    }
+                });
+            }
+
+            // --- GESTIONNAIRE GLOBAL POUR LES FACTURES ---
             document.body.addEventListener('click', function(e) {
                 const btn = e.target.closest('.btn-afficher-facture');
                 if (btn) {
@@ -1207,7 +1315,9 @@
                     const prix = parseFloat(btn.getAttribute('data-prix')) || 0;
                     const paiement = btn.getAttribute('data-paiement') || "Espèces";
 
-                    afficherFacture(numero, date, client, [{ nom: produit, qte: quantite, prix: prix }], paiement);
+                    if (typeof afficherFacture === 'function') {
+                        afficherFacture(numero, date, client, [{ nom: produit, qte: quantite, prix: prix }], paiement);
+                    }
                 }
             });
         });

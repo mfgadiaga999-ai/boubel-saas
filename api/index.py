@@ -1,10 +1,15 @@
 import os
+import json
 from collections import Counter
-from datetime import datetime
-from datetime import date
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from datetime import datetime, date
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client, Client
+from google import genai
+
+# Chargement des variables d'environnement (.env)
+load_dotenv()
 
 # 1. Initialisation de l'application Flask
 app = Flask(__name__, template_folder='templates', static_folder='../public/static')
@@ -16,12 +21,54 @@ app.secret_key = os.environ.get('SECRET_KEY', 'boubel_saas_secret_key_2026')
 def favicon():
     return '', 204
 
-# 3. Configuration Supabase
-SUPABASE_URL = "https://ogihumifxluovsrzlgve.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9naWh1bWlmeGx1b3ZzcnpsZ3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NDk2NTQsImV4cCI6MjEwMjIyNTY1NH0.g64nxtVh5EhlO3LlOUO1aEIRkFGJglaDeBXQLikCR5o"
+# 3. Configuration et Initialisation des Clients
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def get_supabase_client() -> Client:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise ValueError("SUPABASE_URL ou SUPABASE_KEY manquante dans le .env")
     return create_client(SUPABASE_URL, SUPABASE_KEY)
+
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY manquante dans le .env")
+
+# Instance unique du client Supabase
+supabase: Client = get_supabase_client()
+
+# Instance du client Gemini
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+
+
+# 4. Fonction d'extraction du stock Supabase (Correction de la table 'stock')
+def fetch_quincaillerie_stock(quincaillerie_id: str) -> str:
+    """Interroge la table 'stock' de Supabase et renvoie un résumé du stock."""
+    try:
+        response = supabase.table('stock') \
+            .select('nom, quantite, prix_unitaire, seuil_alerte') \
+            .eq('quincaillerie_id', quincaillerie_id) \
+            .execute()
+
+        produits = response.data
+
+        if not produits:
+            return "Aucun produit trouvé dans le stock de cette quincaillerie."
+
+        lignes_stock = []
+        for p in produits:
+            seuil = p.get('seuil_alerte') or 5
+            statut = "CRITIQUE (Seuil atteint)" if p['quantite'] <= seuil else "OK"
+            lignes_stock.append(
+                f"- **{p['nom']}** : {p['quantite']} unités | Prix : {p['prix_unitaire']} FCFA | État : {statut}"
+            )
+
+        return "\n".join(lignes_stock)
+
+    except Exception as e:
+        print(f"[ERREUR SUPABASE]: {str(e)}")
+        return "Erreur lors de l'extraction des données du stock."
+
 
 @app.route('/demo')
 def mode_demo():
@@ -62,22 +109,23 @@ def mode_demo():
         alertes_count=alertes_count
     )
 
+
 @app.route('/reset-admin')
 def reset_admin():
-    supabase = get_supabase_client()
-    if not supabase:
+    supabase_cli = get_supabase_client()
+    if not supabase_cli:
         return "❌ Erreur : Les variables SUPABASE_URL ou SUPABASE_KEY ne sont pas lues sur Vercel."
 
     mdp_clair = "#M@meF@llou999#"
     hash_mdp = generate_password_hash(mdp_clair)
 
     try:
-        res = supabase.table('utilisateurs').select('*').eq('identifiant', 'superadmin').execute()
+        res = supabase_cli.table('utilisateurs').select('*').eq('identifiant', 'superadmin').execute()
         if res.data:
-            supabase.table('utilisateurs').update({'mot_de_passe': hash_mdp}).eq('identifiant', 'superadmin').execute()
+            supabase_cli.table('utilisateurs').update({'mot_de_passe': hash_mdp}).eq('identifiant', 'superadmin').execute()
             return f"<h3>✅ Succès !</h3><p>Le mot de passe du <b>superadmin</b> a été réinitialisé en base.</p><ul><li><b>Identifiant :</b> superadmin</li><li><b>Mot de passe :</b> {mdp_clair}</li></ul><br><a href='/'>👉 Cliquer ici pour aller à la page de connexion</a>"
         else:
-            supabase.table('utilisateurs').insert({
+            supabase_cli.table('utilisateurs').insert({
                 'quincaillerie_id': None,
                 'identifiant': 'superadmin',
                 'mot_de_passe': hash_mdp,
@@ -87,65 +135,60 @@ def reset_admin():
     except Exception as e:
         return f"<h3>❌ Erreur Supabase :</h3><p>{str(e)}</p>"
 
+
 @app.route('/')
 def index():
     produits, ventes, liste_quincailleries = [], [], []
     alertes_count = 0
     info_quincaillerie = None
-    supabase = get_supabase_client()
+    supabase_cli = get_supabase_client()
 
     mois_courant = datetime.now().strftime('%Y-%m')
     aujourdhui = datetime.now().strftime('%Y-%m-%d')
 
     # --- ENREGISTREMENT DU VISITEUR ---
-    # 1. On ne compte PAS si c'est un super_admin
-    # 2. On ne compte PAS si la session a déjà marqué "visite_enregistree" (évite le refresh F5)
     est_super_admin = (session.get('role') == 'super_admin')
     deja_visite = session.get('visite_enregistree', False)
 
-    if supabase and not est_super_admin and not deja_visite:
+    if supabase_cli and not est_super_admin and not deja_visite:
         try:
             ip_client = request.headers.get('X-Forwarded-For', request.remote_addr)
             if ip_client and ',' in ip_client:
                 ip_client = ip_client.split(',')[0].strip()
                 
-            supabase.table('visiteurs').insert({'ip_address': ip_client}).execute()
-            # Marquer dans la session que ce navigateur a déjà été compté
+            supabase_cli.table('visiteurs').insert({'ip_address': ip_client}).execute()
             session['visite_enregistree'] = True
         except Exception as e:
             print(f"Erreur enregistrement visiteur: {e}")
 
-    if session.get('connecte') and supabase:
+    if session.get('connecte') and supabase_cli:
         role = session.get('role')
         q_id = session.get('quincaillerie_id')
 
         # --- ESPACE SUPER ADMIN ---
         if role == 'super_admin':
-            res_q = supabase.table('quincailleries').select('*').order('id').execute()
+            res_q = supabase_cli.table('quincailleries').select('*').order('id').execute()
             liste_quincailleries = res_q.data or []
 
-            res_v = supabase.table('ventes').select('*').execute()
+            res_v = supabase_cli.table('ventes').select('*').execute()
             toutes_les_ventes = res_v.data or []
 
-            res_s = supabase.table('stock').select('*').execute()
+            res_s = supabase_cli.table('stock').select('*').execute()
             tout_le_stock = res_s.data or []
 
-            res_u = supabase.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
+            res_u = supabase_cli.table('utilisateurs').select('id, quincaillerie_id, identifiant').eq('role', 'gerant').execute()
             users_map = {u['quincaillerie_id']: u['identifiant'] for u in (res_u.data or []) if u.get('quincaillerie_id')}
 
-            # --- Récupération des visites et statistiques ---
             visiteurs_aujourdhui = 0
             visiteurs_mois = 0
             visiteurs_total = 0
             derniers_visiteurs = []
 
             try:
-                # Récupérer les 50 plus récentes pour le tableau
-                res_vis = supabase.table('visiteurs').select('*').order('id', desc=True).limit(50).execute()
+                res_vis = supabase_cli.table('visiteurs').select('*').order('id', desc=True).limit(50).execute()
                 derniers_visiteurs = res_vis.data or []
 
-                # Récupérer le total global pour les cartes
-                res_vis_all = supabase.table('visiteurs').select('created_at').execute()
+                res_vis_all = supabase_cli.table('visiteurs').select('created_at').execute()
                 toutes_visites = res_vis_all.data or []
                 visiteurs_total = len(toutes_visites)
 
@@ -251,7 +294,7 @@ def index():
 
         # --- ESPACE GERANT DE QUINCAILLERIE ---
         elif q_id:
-            res_q = supabase.table('quincailleries').select('*').eq('id', q_id).execute()
+            res_q = supabase_cli.table('quincailleries').select('*').eq('id', q_id).execute()
             if res_q.data:
                 info_quincaillerie = res_q.data[0]
                 if not info_quincaillerie.get('actif'):
@@ -259,7 +302,7 @@ def index():
                     flash("Votre compte est suspendu. Veuillez contacter l'administrateur.", "danger")
                     return redirect(url_for('index'))
 
-            res_stock = supabase.table('stock').select('*').eq('quincaillerie_id', q_id).order('nom').execute()
+            res_stock = supabase_cli.table('stock').select('*').eq('quincaillerie_id', q_id).order('nom').execute()
             valeur_stock_totale = 0.0
             
             for item in (res_stock.data or []):
@@ -278,7 +321,7 @@ def index():
                     'seuil_alerte': seuil
                 })
 
-            res_ventes = supabase.table('ventes').select('*').eq('quincaillerie_id', q_id).order('created_at', desc=True).execute()
+            res_ventes = supabase_cli.table('ventes').select('*').eq('quincaillerie_id', q_id).order('created_at', desc=True).execute()
             ca_quincaillerie_mois = 0.0
             ventes_du_mois_gerant = []
             
@@ -287,7 +330,6 @@ def index():
                 px = float(v.get('prix_vente', 0))
                 date_v = str(v.get('date_vente', ''))
                 
-                # --- RÉCUPÉRATION DU NOM DU CLIENT ET MODE DE PAIEMENT ---
                 nom_client = v.get('nom_client') or v.get('client_nom') or v.get('client')
                 if not nom_client or not str(nom_client).strip():
                     nom_client = "Client Comptant"
@@ -305,8 +347,8 @@ def index():
                     'quantite_vendue': qte,
                     'prix_vente': px,
                     'vendu_par': v.get('vendu_par'),
-                    'nom_client': nom_client,          # Ajouté pour index.html
-                    'mode_paiement': mode_paiement      # Ajouté pour index.html
+                    'nom_client': nom_client,
+                    'mode_paiement': mode_paiement
                 })
 
             gerant_insights = []
@@ -368,17 +410,18 @@ def index():
         gerant_insights=[]
     )
 
+
 @app.route('/login', methods=['POST'])
 def login():
     identifiant = request.form.get('identifiant', '').strip()
     mot_de_passe = request.form.get('mot_de_passe', '').strip()
-    supabase = get_supabase_client()
+    supabase_cli = get_supabase_client()
 
-    if not supabase:
+    if not supabase_cli:
         flash("La connexion à la base de données n'est pas configurée.", "danger")
         return redirect(url_for('index'))
 
-    res = supabase.table('utilisateurs').select('*').eq('identifiant', identifiant).execute()
+    res = supabase_cli.table('utilisateurs').select('*').eq('identifiant', identifiant).execute()
     users = res.data or []
 
     if users and check_password_hash(users[0]['mot_de_passe'], mot_de_passe):
@@ -394,18 +437,20 @@ def login():
 
     return redirect(url_for('index'))
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     flash("Vous êtes déconnecté.", "info")
     return redirect(url_for('index'))
 
+
 # --- ACTIONS ESPACE SUPER ADMIN ---
 
 @app.route('/admin/creer-quincaillerie', methods=['POST'])
 def creer_quincaillerie():
-    supabase = get_supabase_client()
-    if session.get('role') != 'super_admin' or not supabase:
+    supabase_cli = get_supabase_client()
+    if session.get('role') != 'super_admin' or not supabase_cli:
         return redirect(url_for('index'))
 
     nom_entreprise = request.form.get('nom_entreprise', '').strip()
@@ -413,7 +458,7 @@ def creer_quincaillerie():
     identifiant_gerant = request.form.get('identifiant_gerant', '').strip()
     mdp_gerant = request.form.get('mdp_gerant', '').strip()
 
-    res_q = supabase.table('quincailleries').insert({
+    res_q = supabase_cli.table('quincailleries').insert({
         'nom_entreprise': nom_entreprise,
         'telephone': telephone,
         'actif': True
@@ -422,7 +467,7 @@ def creer_quincaillerie():
     if res_q.data:
         new_q_id = res_q.data[0]['id']
         hashed_mdp = generate_password_hash(mdp_gerant)
-        supabase.table('utilisateurs').insert({
+        supabase_cli.table('utilisateurs').insert({
             'quincaillerie_id': new_q_id,
             'identifiant': identifiant_gerant,
             'mot_de_passe': hashed_mdp,
@@ -432,16 +477,17 @@ def creer_quincaillerie():
 
     return redirect(url_for('index'))
 
+
 @app.route('/admin/modifier-gerant/<int:q_id>', methods=['POST'])
 def modifier_gerant(q_id):
-    supabase = get_supabase_client()
-    if session.get('role') != 'super_admin' or not supabase:
+    supabase_cli = get_supabase_client()
+    if session.get('role') != 'super_admin' or not supabase_cli:
         return redirect(url_for('index'))
 
     nouvel_identifiant = request.form.get('identifiant_gerant', '').strip()
     nouveau_mdp = request.form.get('mdp_gerant', '').strip()
 
-    res_u = supabase.table('utilisateurs').select('id').eq('quincaillerie_id', q_id).eq('role', 'gerant').execute()
+    res_u = supabase_cli.table('utilisateurs').select('id').eq('quincaillerie_id', q_id).eq('role', 'gerant').execute()
     users = res_u.data or []
 
     if users:
@@ -453,44 +499,47 @@ def modifier_gerant(q_id):
             update_data['mot_de_passe'] = generate_password_hash(nouveau_mdp)
 
         if update_data:
-            supabase.table('utilisateurs').update(update_data).eq('id', user_id).execute()
+            supabase_cli.table('utilisateurs').update(update_data).eq('id', user_id).execute()
             flash("Identifiants du gérant mis à jour avec succès !", "success")
     else:
         flash("Aucun gérant trouvé pour cette quincaillerie.", "danger")
 
     return redirect(url_for('index'))
 
+
 @app.route('/admin/toggle-quincaillerie/<int:id>')
 def toggle_quincaillerie(id):
-    supabase = get_supabase_client()
-    if session.get('role') != 'super_admin' or not supabase:
+    supabase_cli = get_supabase_client()
+    if session.get('role') != 'super_admin' or not supabase_cli:
         return redirect(url_for('index'))
 
-    res = supabase.table('quincailleries').select('actif').eq('id', id).execute()
+    res = supabase_cli.table('quincailleries').select('actif').eq('id', id).execute()
     if res.data:
         etat_actuel = res.data[0]['actif']
-        supabase.table('quincailleries').update({'actif': not etat_actuel}).eq('id', id).execute()
+        supabase_cli.table('quincailleries').update({'actif': not etat_actuel}).eq('id', id).execute()
         flash("Statut du compte mis à jour.", "info")
 
     return redirect(url_for('index'))
 
+
 @app.route('/admin/supprimer-quincaillerie/<int:id>')
 def supprimer_quincaillerie(id):
-    supabase = get_supabase_client()
-    if session.get('role') != 'super_admin' or not supabase:
+    supabase_cli = get_supabase_client()
+    if session.get('role') != 'super_admin' or not supabase_cli:
         return redirect(url_for('index'))
 
-    supabase.table('quincailleries').delete().eq('id', id).execute()
+    supabase_cli.table('quincailleries').delete().eq('id', id).execute()
     flash("Quincaillerie et toutes ses données supprimées définitivement.", "info")
     return redirect(url_for('index'))
+
 
 # --- ACTIONS ESPACE QUINCAILLERIE (GERANT) ---
 
 @app.route('/ajouter-stock', methods=['POST'])
 def ajouter_stock():
-    supabase = get_supabase_client()
+    supabase_cli = get_supabase_client()
     q_id = session.get('quincaillerie_id')
-    if not session.get('connecte') or not q_id or not supabase:
+    if not session.get('connecte') or not q_id or not supabase_cli:
         return redirect(url_for('index'))
 
     nom = request.form.get('nom', '').strip()
@@ -498,18 +547,18 @@ def ajouter_stock():
     prix = float(request.form.get('prix', 0.0))
     seuil = int(request.form.get('seuil_alerte', 5))
 
-    res = supabase.table('stock').select('*').eq('quincaillerie_id', q_id).eq('nom', nom).execute()
+    res = supabase_cli.table('stock').select('*').eq('quincaillerie_id', q_id).eq('nom', nom).execute()
     existing = res.data or []
 
     if existing:
         nouveau_stock = existing[0]['quantite'] + quantite
-        supabase.table('stock').update({
+        supabase_cli.table('stock').update({
             'quantite': nouveau_stock,
             'prix_unitaire': prix,
             'seuil_alerte': seuil
         }).eq('id', existing[0]['id']).execute()
     else:
-        supabase.table('stock').insert({
+        supabase_cli.table('stock').insert({
             'quincaillerie_id': q_id,
             'nom': nom,
             'quantite': quantite,
@@ -520,11 +569,12 @@ def ajouter_stock():
     flash(f"Article '{nom}' enregistré.", "success")
     return redirect(url_for('index'))
 
+
 @app.route('/modifier-produit/<int:id>', methods=['POST'])
 def modifier_produit(id):
-    supabase = get_supabase_client()
+    supabase_cli = get_supabase_client()
     q_id = session.get('quincaillerie_id')
-    if not session.get('connecte') or not q_id or not supabase:
+    if not session.get('connecte') or not q_id or not supabase_cli:
         return redirect(url_for('index'))
 
     nom = request.form.get('nom', '').strip()
@@ -532,7 +582,7 @@ def modifier_produit(id):
     stock = int(request.form.get('stock', 0))
     seuil = int(request.form.get('seuil', 5))
 
-    supabase.table('stock').update({
+    supabase_cli.table('stock').update({
         'nom': nom,
         'prix_unitaire': prix,
         'quantite': stock,
@@ -542,26 +592,24 @@ def modifier_produit(id):
     flash("Produit mis à jour.", "success")
     return redirect(url_for('index'))
 
+
 @app.route('/supprimer-produit/<int:id>')
 def supprimer_produit(id):
-    supabase = get_supabase_client()
+    supabase_cli = get_supabase_client()
     q_id = session.get('quincaillerie_id')
-    if not session.get('connecte') or not q_id or not supabase:
+    if not session.get('connecte') or not q_id or not supabase_cli:
         return redirect(url_for('index'))
 
-    supabase.table('stock').delete().eq('id', id).eq('quincaillerie_id', q_id).execute()
+    supabase_cli.table('stock').delete().eq('id', id).eq('quincaillerie_id', q_id).execute()
     flash("Article supprimé du stock.", "info")
     return redirect(url_for('index'))
 
-import json
-from flask import Flask, render_template, request, redirect, url_for, flash
 
 @app.route('/ajouter-vente', methods=['POST'])
 def ajouter_vente():
-    supabase = get_supabase_client()
+    supabase_cli = get_supabase_client()
     panier_json = request.form.get('panier_json')
 
-    # Récupération du nom du client envoyé par le formulaire
     nom_client = request.form.get('nom_client', 'Client Comptant').strip()
     if not nom_client:
         nom_client = "Client Comptant"
@@ -589,8 +637,7 @@ def ajouter_vente():
             quantite_vendue = int(item.get('qte', 0))
             prix_unitaire = float(item.get('prix', 0))
 
-            # Recherche du produit dans la table 'stock'
-            response = supabase.table('stock') \
+            response = supabase_cli.table('stock') \
                 .select('*') \
                 .eq('nom', nom_produit) \
                 .eq('quincaillerie_id', quincaillerie_id) \
@@ -607,13 +654,11 @@ def ajouter_vente():
                 flash(f"Stock insuffisant pour {nom_produit}.", "danger")
                 return redirect(url_for('index'))
 
-            # Mise à jour de la quantité dans la table 'stock'
-            supabase.table('stock') \
+            supabase_cli.table('stock') \
                 .update({'quantite': nouveau_stock}) \
                 .eq('id', produit['id']) \
                 .execute()
 
-            # Insertion dans la table 'ventes' AVEC nom_client et mode_paiement
             nouvelle_vente = {
                 'quincaillerie_id': quincaillerie_id,
                 'nom_produit': nom_produit,
@@ -621,11 +666,11 @@ def ajouter_vente():
                 'prix_vente': prix_unitaire,
                 'date_vente': date_du_jour,
                 'vendu_par': vendu_par_user,
-                'nom_client': nom_client,          # Enregistré en base
-                'mode_paiement': mode_paiement      # Enregistré en base
+                'nom_client': nom_client,
+                'mode_paiement': mode_paiement
             }
             
-            supabase.table('ventes').insert(nouvelle_vente).execute()
+            supabase_cli.table('ventes').insert(nouvelle_vente).execute()
 
         flash("Vente enregistrée avec succès !", "success")
         return redirect(url_for('index'))
@@ -634,26 +679,83 @@ def ajouter_vente():
         flash(f"Erreur Supabase : {str(e)}", "danger")
         return redirect(url_for('index'))
 
+
 @app.route('/supprimer-vente/<int:id>')
 def supprimer_vente(id):
-    supabase = get_supabase_client()
+    supabase_cli = get_supabase_client()
     q_id = session.get('quincaillerie_id')
-    if not session.get('connecte') or not q_id or not supabase:
+    if not session.get('connecte') or not q_id or not supabase_cli:
         return redirect(url_for('index'))
 
-    res = supabase.table('ventes').select('*').eq('id', id).eq('quincaillerie_id', q_id).execute()
+    res = supabase_cli.table('ventes').select('*').eq('id', id).eq('quincaillerie_id', q_id).execute()
     vente = res.data or []
 
     if vente:
         v = vente[0]
-        res_prod = supabase.table('stock').select('*').eq('quincaillerie_id', q_id).eq('nom', v['nom_produit']).execute()
+        res_prod = supabase_cli.table('stock').select('*').eq('quincaillerie_id', q_id).eq('nom', v['nom_produit']).execute()
         prod = res_prod.data or []
         if prod:
-            supabase.table('stock').update({'quantite': prod[0]['quantite'] + v['quantite_vendue']}).eq('id', prod[0]['id']).execute()
+            supabase_cli.table('stock').update({'quantite': prod[0]['quantite'] + v['quantite_vendue']}).eq('id', prod[0]['id']).execute()
 
-    supabase.table('ventes').delete().eq('id', id).eq('quincaillerie_id', q_id).execute()
+    supabase_cli.table('ventes').delete().eq('id', id).eq('quincaillerie_id', q_id).execute()
     flash("Vente annulée et stock réajusté.", "info")
     return redirect(url_for('index'))
+
+
+# --- ROUTE DU CHATBOT INTELLIGENT ---
+@app.route('/chatbot', methods=['POST'])
+def chatbot():
+    try:
+        data = request.get_json() or {}
+        user_message = data.get('message', '').strip()
+
+        if not user_message:
+            return jsonify({'status': 'error', 'message': 'Message vide'}), 400
+
+        q_id = session.get('quincaillerie_id', '1')
+        nom_user = session.get('nom_utilisateur', 'Gérant')
+
+        contexte_stock = fetch_quincaillerie_stock(str(q_id))
+
+        system_prompt = f"""
+Vous êtes l'assistant intelligent IA de gestion pour le SaaS de quincaillerie Boubel.
+Utilisateur connecté : {nom_user} (ID Quincaillerie : {q_id})
+
+ÉTAT DU STOCK RÉEL DE LA QUINCAILLERIE (SUPABASE) :
+{contexte_stock}
+
+CONSIGNES STRICTES :
+1. DÉTECTION DE LA LANGUE : Répondez TOUJOURS dans la langue utilisée par l'utilisateur.
+2. MOT DE PASSE / COMPTE OUBLIÉ : Redirigez vers l'Administrateur.
+3. GESTION DU STOCK ET VENTES :
+   - Pour ajouter du stock : Formulaire 'Ajouter / Réapprovisionner un Produit'.
+   - Pour enregistrer une vente : Formulaire de vente puis l'onglet 'Factures & Reçus'.
+   - Disponibilité/Prix : Utilisez UNIQUEMENT les données du stock ci-dessus.
+4. N'UTILISEZ AUCUN SYMBOLE MARKDOWN : Interdiction stricte d'utiliser des astérisques (*), du gras (**), des hashtags (#) ou des tirets de liste.
+5. Rédigez uniquement en texte brut avec des phrases simples et des sauts de ligne classiques.
+6. DÉTECTION DE LA LANGUE : Répondez toujours dans la langue de l'utilisateur.
+7. FORMAT : Réponses courtes, concises et courtoises.
+"""
+
+        # Utiliser la version gemini-3.6-flash et passer le message dans une liste
+        response = gemini_client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=[user_message],
+            config={
+                "system_instruction": system_prompt,
+                "temperature": 0.2,
+            }
+        )
+
+        return jsonify({
+            'status': 'success',
+            'response': response.text
+        }), 200
+
+    except Exception as e:
+        print(f"[ERREUR CHATBOT]: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
